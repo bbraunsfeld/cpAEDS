@@ -1,7 +1,7 @@
 """Pipeline tool to set up constant pH simulations with Gromos using AEDS"""
 
 # Add imports here
-from .src import *
+from .utils import *
 
 # Handle versioneer
 from ._version import get_versions
