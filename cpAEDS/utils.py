@@ -33,7 +33,7 @@ def dumb_full_config_yaml(settings_loaded):
     with open(f"final_settings.yaml", 'w') as file:
         yaml.dump(settings_loaded, file)
 
-def check_settings(settings_loaded):
+def check_system_settings(settings_loaded):
     mddir_exists = False
     outdir_exists = False
     topo_exists = False
@@ -134,6 +134,30 @@ def check_input_files(settings_loaded):
     settings_loaded['system']['ref_imd'] = f"{imd_list[-1]}" 
     print(f"{settings_loaded['system']['ref_imd']} found.")
 
+def check_simulation_settings(settings_loaded):
+    nstats_exists = False
+    if settings_loaded['simulation']['NSTATS']:
+        nstats_exists = True
+        if nstats_exists == True and int(settings_loaded['simulation']['NSTATS']) > 1:
+            print(f"Statistic mode with {settings_loaded['simulation']['NSTATS']} repetitions")  
+        else:
+            settings_loaded['simulation']['NSTATS'] = 1
+            print(f"Single run mode")
+    if  ( 
+        settings_loaded['simulation']['parameters'].get('NRUN') == None or
+        settings_loaded['simulation']['parameters'].get('NSTLIM') == None or 
+        settings_loaded['simulation']['parameters'].get('NTPR') == None or
+        settings_loaded['simulation']['parameters'].get('NTWX') == None or
+        settings_loaded['simulation']['parameters'].get('NTWE') == None or
+        settings_loaded['simulation']['parameters'].get('dt') == None or 
+        settings_loaded['simulation']['parameters'].get('EMIN') == None or
+        settings_loaded['simulation']['parameters'].get('EMAX') == None or
+        settings_loaded['simulation']['parameters'].get('EIR_start') == None or
+        settings_loaded['simulation']['parameters'].get('EIR_range') == None or
+        settings_loaded['simulation']['parameters'].get('EIR_step_size') == None
+    ):
+        raise KeyError("Parameterset is not complete")
+
 def check_finished(settings_loaded):
     omd_list = []
     run_complete = False
@@ -154,25 +178,26 @@ def create_offsets(settings_loaded):
     settings_loaded['simulation']['parameters']['n_runs'] = len(offset_list)
 
 def create_folders(settings_loaded):
-    if os.getcwd() == settings_loaded['system']['aeds_dir']:
-        try:
-            os.makedirs(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}")
-        except FileExistsError:
-            pass
-        os.chdir(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}")
-    else:
-        os.chdir(settings_loaded['system']['aeds_dir'])
-        try:
-            os.makedirs(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}")
-        except FileExistsError:
-            pass
-        os.chdir(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}")
+    for i in range(1, settings_loaded['simulation']['NSTATS'] + 1):
+        if os.getcwd() == settings_loaded['system']['aeds_dir']:
+            try:
+                os.makedirs(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}_{i}")
+            except FileExistsError:
+                pass
+            os.chdir(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}_{i}")
+        else:
+            os.chdir(settings_loaded['system']['aeds_dir'])
+            try:
+                os.makedirs(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}_{i}")
+            except FileExistsError:
+                pass
+            os.chdir(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}_{i}")
 
-    for i in range(1,settings_loaded['simulation']['parameters']['n_runs'] + 1):
-        try:
-            os.mkdir(f"{settings_loaded['system']['output_dir_name']}_{i}")
-        except FileExistsError:
-            pass   
+        for j in range(1,settings_loaded['simulation']['parameters']['n_runs'] + 1):
+            try:
+                os.mkdir(f"{settings_loaded['system']['output_dir_name']}_{i}_{j}")
+            except FileExistsError:
+                pass   
 
 def copy_lib_file(destination,name):
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), f"data/{name}"))

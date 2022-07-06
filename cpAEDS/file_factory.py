@@ -23,21 +23,38 @@ def build_mk_script_file(settings_loaded,dir_path):
     return body
 
 def build_job_file(settings_loaded):
-    body = f"""TITLE
+    if settings_loaded['simulation']['NSTATS']>1:
+        body = f"""TITLE
 splitted search in {settings_loaded['simulation']['parameters']['NRUN']} parts
 END
-JOBSCRIPTS
+JOBSCRIPTS 
+job_id NTIVEL NTIAEDSS subdir run_after
+"""
+        for i in range(1,settings_loaded['simulation']['parameters']['NRUN']+1,1):
+            if i == 1:
+                body += f"{i}     1      1        .      {i-1}\n"
+            elif i < settings_loaded['simulation']['parameters']['NRUN']:
+                body += f"{i}     0      0        .      {i-1}\n"
+            elif i == settings_loaded['simulation']['parameters']['NRUN']:
+                body += f"{i}     0      0        .      {i-1}\n"
+                body += f"END"
+        return body
+    else: 
+        body = f"""TITLE
+splitted search in {settings_loaded['simulation']['parameters']['NRUN']} parts
+END
+JOBSCRIPTS 
 job_id NTIAEDSS subdir run_after
 """
-    for i in range(1,settings_loaded['simulation']['parameters']['NRUN']+1,1):
-        if i == 1:
-            body += f"{i}         1        .      {i-1}\n"
-        elif i < settings_loaded['simulation']['parameters']['NRUN']:
-            body += f"{i}         0        .      {i-1}\n"
-        elif i == settings_loaded['simulation']['parameters']['NRUN']:
-            body += f"{i}         0        .      {i-1}\n"
-            body += f"END"
-    return body
+        for i in range(1,settings_loaded['simulation']['parameters']['NRUN']+1,1):
+            if i == 1:
+                body += f"{i}         1        .      {i-1}\n"
+            elif i < settings_loaded['simulation']['parameters']['NRUN']:
+                body += f"{i}         0        .      {i-1}\n"
+            elif i == settings_loaded['simulation']['parameters']['NRUN']:
+                body += f"{i}         0        .      {i-1}\n"
+                body += f"END"
+        return body
 
 def scrap_ref_imd(settings_loaded):
     ref_imd_path = f"{settings_loaded['system']['md_dir']}/{settings_loaded['system']['ref_imd']}"
@@ -55,7 +72,7 @@ def scrap_ref_imd(settings_loaded):
                 body_1 += f"{line}"
             if f"BOUNDCOND" in line:
                 flag = 2
-            elif f"PRINTOUT" in line:
+            elif f"INITIALISE" in line:
                 flag = 0
             if flag == 2:
                 body_2 += f"{line}"
@@ -66,7 +83,7 @@ def scrap_ref_imd(settings_loaded):
                 temp_flag = 3
     return body_1,body_2
                     
-def build_imd_file(settings_loaded,EIR):
+def build_imd_file(settings_loaded,EIR,rs):
     date = datetime.date.today()
     NSTLIM = settings_loaded['simulation']['parameters']['NSTLIM']
     NTPR = settings_loaded['simulation']['parameters']['NTPR']
@@ -75,6 +92,7 @@ def build_imd_file(settings_loaded,EIR):
     dt = settings_loaded['simulation']['parameters']['dt']
     EMIN = settings_loaded['simulation']['parameters']['EMIN']
     EMAX = settings_loaded['simulation']['parameters']['EMAX']
+    rnd_seed = 210184 + rs
     b1,b2=scrap_ref_imd(settings_loaded)
     body = f"""TITLE
 	Automatically generated input file
@@ -84,7 +102,23 @@ END
 #   NSTLIM         T        DT
    {NSTLIM}        0       {dt}
 END
-{b2}PRINTOUT
+{b2}
+INITIALISE
+# Default values for NTI values: 0
+#   NTIVEL    NTISHK    NTINHT    NTINHB
+         0         0         0         0
+#   NTISHI    NTIRTC    NTICOM
+         1         0         0
+#   NTISTI
+         0
+#       IG     TEMPI
+  {rnd_seed}       0
+END
+COMTRANSROT
+#     NSCM
+      1000
+END
+PRINTOUT
 #NTPR: print out energies, etc. every NTPR steps
 #NTPP: =1 perform dihedral angle transition monitoring
 #     NTPR      NTPP
@@ -137,12 +171,4 @@ def build_output(settings_loaded,fractions,dG,pka_dG,pka_offset):
 
     for i in range(1,n+1,1):
             body += f"{i},{offsets[i-1]},{fractions[i-1][0]},{fractions[i-1][1]},{dG[i-1]},{pka_dG[i-1]},{pka_offset[i-1]}\n"
-    return body
-
-def build_dfmult_file(settings_loaded):
-    temp = settings_loaded['simulation']['parameters']['temp']
-    body = f"""
-@temp {temp}
-@stateR eds_vr.dat
-@endstates e1.dat e2.dat"""
     return body
