@@ -46,7 +46,7 @@ def create_prod_run(settings_loaded):
                 exe.check_returncode()
                 print('Finished running mk_script.')   
             eir_counter += 1
-        settings_updated = copy.deepcopy(settings_loaded))
+        settings_updated = copy.deepcopy(settings_loaded)
         settings_updated['system']['output_dir_name']=f"{settings_updated['system']['output_dir_name']}_{random_seed}"
         dumb_full_config_yaml(settings_updated)
         random_seed += 1
