@@ -158,5 +158,3 @@ def write_prob_sampling(prob_outfile, prob_state, itime, step):
             out_string += "\n"       
             out.write(out_string)
             time += step
- 
-

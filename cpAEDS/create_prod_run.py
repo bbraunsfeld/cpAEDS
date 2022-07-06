@@ -1,10 +1,10 @@
 import os
 import sys
 import subprocess
-from utils import (load_config_yaml,check_settings,check_system_dir,check_dirs,check_input_files,
+from cpAEDS.utils import (load_config_yaml,check_settings,check_system_dir,check_dirs,check_input_files,
                         create_offsets,create_folders,get_dir_list,copy_lib_file,
                         write_file,create_ana_dir,dumb_full_config_yaml)
-from file_factory import build_mk_script_file,build_job_file,build_imd_file
+from cpAEDS.file_factory import build_mk_script_file,build_job_file,build_imd_file
 
 def create_prod_run(settings_loaded):
     create_offsets(settings_loaded)

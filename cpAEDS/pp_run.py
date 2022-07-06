@@ -2,10 +2,10 @@ from contextlib import redirect_stderr
 import os
 import sys
 import subprocess
-from utils import load_config_yaml,get_dir_list,write_file,read_df,plot_offset_ratio,plot_offst_dG,check_finished,write_file2,read_output
-from file_factory import build_dfmult_file,build_ene_ana,build_output
-from AEDS_sampling import read_energyfile, calculate_statesampled,calc_prob_sampling,write_prob_sampling,calc_sampling,write_sampling
-from algorithms import pKa_from_df
+from cpAEDS.utils import load_config_yaml,get_dir_list,write_file,read_df,plot_offset_ratio,plot_offst_dG,check_finished,write_file2,read_output
+from cpAEDS.file_factory import build_dfmult_file,build_ene_ana,build_output
+from cpAEDS.AEDS_sampling import read_energyfile, calculate_statesampled,calc_prob_sampling,write_prob_sampling,calc_sampling,write_sampling
+from cpAEDS.algorithms import pKa_from_df
 #'C:/Users/Bene/Documents/PhD/scripts/const_pH/tests/test_data/input_parameter.yaml')
 
 G_efile_template = "e%ss.dat"

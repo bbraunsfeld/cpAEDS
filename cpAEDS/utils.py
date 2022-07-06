@@ -14,8 +14,8 @@ import seaborn as sns
 from scipy import stats
 from scipy.optimize import curve_fit
 import pandas as pd 
-from algorithms import natural_keys, offset_steps, ph_curve
-from file_factory import build_ene_ana
+from cpAEDS.algorithms import natural_keys, offset_steps, ph_curve
+from cpAEDS.file_factory import build_ene_ana
 
 def load_config_yaml(config) -> dict:
     with open(f"{config}", "r") as stream:

@@ -1,14 +1,17 @@
-name: test
+name: constph
 channels:
-
   - conda-forge
-
   - defaults
 dependencies:
     # Base depends
   - python
   - pip
-
+  - numpy
+  - pyyaml
+  - matplotlib
+  - seaborn
+  - statsmodels
+  - scipy
     # Testing
   - pytest
   - pytest-cov

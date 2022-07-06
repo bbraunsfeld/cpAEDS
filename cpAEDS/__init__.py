@@ -2,6 +2,8 @@
 
 # Add imports here
 from .utils import *
+from .file_factory import *
+from .algorithms import *
 
 # Handle versioneer
 from ._version import get_versions
