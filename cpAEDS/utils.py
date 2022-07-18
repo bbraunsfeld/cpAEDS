@@ -272,6 +272,18 @@ def read_df(file):
                 df = float(fields[1])
     return df  
 
+def read_energyfile(efile):
+    etraj = []
+    ttraj = []
+    with open(efile, 'r') as inp:
+        for line in inp:
+            if line.startswith('#'):
+                continue
+            fields = line.split()
+            etraj.append(float(fields[1]))
+            ttraj.append(float(fields[0]))
+    return etraj, ttraj
+
 def read_output(file):
     fraction_list = []
     offset_list = []
@@ -282,7 +294,6 @@ def read_output(file):
             fraction_list.append(float(line_splitted[2]))
             offset_list.append(float(line_splitted[1]))
     return fraction_list,offset_list
-
 
 def plot_offset_ratio(offsets,fractions,order,settings_loaded):
     x=np.array(offsets)
@@ -307,7 +318,7 @@ def plot_offset_ratio(offsets,fractions,order,settings_loaded):
         plt.legend(["data", "polyfit",f"eq_offset = {pKa}"], loc ="upper right")
     else:
         plt.legend(["data", "polyfit"], loc ="upper right")
-    plt.title(f"{settings_loaded['system']['name']} with emin: -800 kJ/mol; emax: -150 kJ/mol")
+    plt.title(f"{settings_loaded['system']['name']} with emin: {settings_loaded['simulation']['parameters']['EMIN']} kJ/mol; emax: {settings_loaded['simulation']['parameters']['EMAX']} kJ/mol")
     plt.xlabel("offset [kJ/mol]")
     plt.ylabel("fraction of time")
     plt.savefig(f"offset_ratio_order_{order}.png")
@@ -322,7 +333,7 @@ def plot_offst_dG(offsets,dG,order,settings_loaded):
     
     plt.plot(x,y, 'o')
     plt.plot(x, fit_p(x))
-    plt.title(f"{settings_loaded['system']['name']} with emin: -800 kJ/mol; emax: -150 kJ/mol")
+    plt.title(f"{settings_loaded['system']['name']} with emin: {settings_loaded['simulation']['parameters']['EMIN']} kJ/mol; emax: {settings_loaded['simulation']['parameters']['EMAX']} kJ/mol")
     plt.xlabel("offset [kJ/mol]")
     plt.ylabel("dG [kJ/mol]")
     plt.legend(["data", "polyfit"], loc ="upper right")
@@ -402,3 +413,36 @@ def plot_offset_pH(offsets,fractions,settings_loaded):
     plt.savefig(f"offset_pH_reg.png",bbox_inches='tight')
     plt.clf()
 
+def density_plot(density_map_e1,density_map_e2,column_name):
+    energies_e1 = []
+    time_steps_e1 = []
+    for lst in density_map_e1:
+        energies = []
+        time_steps = []
+        for pair in lst:
+            energies.append(pair[0])
+            time_steps.append(pair[1])
+        energies_e1.append(energies)
+        time_steps_e1.append(time_steps)    
+    df = pd.DataFrame(list(zip(*energies_e1)), index = time_steps_e1[0],
+               columns = column_name) 
+    kde_plot=sns.kdeplot(data=df, shade=False)
+    fig = kde_plot.get_figure()
+    fig.savefig(f'kde_e1.png') 
+    plt.clf()
+    energies_e2 = []
+    time_steps_e2 = []
+    for lst in density_map_e2:
+        energies = []
+        time_steps = []
+        for pair in lst:
+            energies.append(pair[0])
+            time_steps.append(pair[1])
+        energies_e2.append(energies)
+        time_steps_e2.append(time_steps) 
+    df = pd.DataFrame(list(zip(*energies_e2)), index = time_steps_e2[0],
+               columns =column_name) 
+    kde_plot=sns.kdeplot(data=df, shade=False)
+    fig = kde_plot.get_figure()
+    fig.savefig(f'kde_e2.png') 
+    plt.clf()

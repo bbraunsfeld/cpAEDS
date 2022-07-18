@@ -112,7 +112,7 @@ INITIALISE
 #   NTISTI
          0
 #       IG     TEMPI
-  {rnd_seed}       0
+  {rnd_seed}     300
 END
 COMTRANSROT
 #     NSCM
@@ -167,7 +167,7 @@ def build_dfmult_file(settings_loaded):
 def build_output(settings_loaded,fractions,dG,pka_dG,pka_offset):
     offsets = settings_loaded['simulation']['parameters']['EIR_list']
     n= len(offsets)
-    body = f"""#RUN, OFFSET, FRACTION1, FRACTION2 dG, pKa_dG, pKa_OFFSET\n"""
+    body = f"""#RUN,OFFSET,FRACTION1,FRACTION2,dG,pKa_dG,pKa_OFFSET\n"""
 
     for i in range(1,n+1,1):
             body += f"{i},{offsets[i-1]},{fractions[i-1][0]},{fractions[i-1][1]},{dG[i-1]},{pka_dG[i-1]},{pka_offset[i-1]}\n"
