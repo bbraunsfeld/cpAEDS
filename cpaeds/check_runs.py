@@ -1,5 +1,5 @@
 import os
-from cpAEDS.utils import load_config_yaml,get_dir_list,check_finished
+from cpaeds.utils import load_config_yaml,get_dir_list,check_finished
 
 
 if __name__ == "__main__":

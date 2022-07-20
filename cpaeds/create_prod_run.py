@@ -2,11 +2,11 @@ import os
 import sys
 import copy
 import subprocess
-from cpAEDS.utils import (load_config_yaml,check_system_settings,check_system_dir,check_dirs,check_input_files,check_simulation_settings,
+from cpaeds.utils import (load_config_yaml,check_system_settings,check_system_dir,check_dirs,check_input_files,check_simulation_settings,
                         create_offsets,create_folders,get_dir_list,copy_lib_file,
                         write_file,create_ana_dir,dumb_full_config_yaml)
-from cpAEDS.file_factory import build_mk_script_file,build_job_file,build_imd_file
-from cpAEDS.algorithms import natural_keys
+from cpaeds.file_factory import build_mk_script_file,build_job_file,build_imd_file
+from cpaeds.algorithms import natural_keys
 
 def create_prod_run(settings_loaded):
     create_offsets(settings_loaded)

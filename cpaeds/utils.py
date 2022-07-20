@@ -14,8 +14,9 @@ import seaborn as sns
 from scipy import stats
 from scipy.optimize import curve_fit
 import pandas as pd 
-from cpAEDS.algorithms import natural_keys, offset_steps, ph_curve
-from cpAEDS.file_factory import build_ene_ana
+from cpaeds.algorithms import natural_keys, offset_steps, ph_curve
+from cpaeds.file_factory import build_ene_ana
+
 
 def load_config_yaml(config) -> dict:
     with open(f"{config}", "r") as stream:
@@ -417,32 +418,45 @@ def density_plot(density_map_e1,density_map_e2,column_name):
     energies_e1 = []
     time_steps_e1 = []
     for lst in density_map_e1:
-        energies = []
-        time_steps = []
-        for pair in lst:
-            energies.append(pair[0])
-            time_steps.append(pair[1])
-        energies_e1.append(energies)
-        time_steps_e1.append(time_steps)    
-    df = pd.DataFrame(list(zip(*energies_e1)), index = time_steps_e1[0],
+        energies_e1.append(lst[0])
+        time_steps_e1.append(lst[1])  
+    df1 = pd.DataFrame(list(zip(*energies_e1)), index = time_steps_e1[0],
                columns = column_name) 
-    kde_plot=sns.kdeplot(data=df, shade=False)
+    kde_plot=sns.kdeplot(data=df1, shade=False)
     fig = kde_plot.get_figure()
     fig.savefig(f'kde_e1.png') 
+    df1.to_csv(f'./e1.csv') 
     plt.clf()
     energies_e2 = []
     time_steps_e2 = []
     for lst in density_map_e2:
-        energies = []
-        time_steps = []
-        for pair in lst:
-            energies.append(pair[0])
-            time_steps.append(pair[1])
-        energies_e2.append(energies)
-        time_steps_e2.append(time_steps) 
-    df = pd.DataFrame(list(zip(*energies_e2)), index = time_steps_e2[0],
+        energies_e2.append(lst[0])
+        time_steps_e2.append(lst[1])  
+    df2 = pd.DataFrame(list(zip(*energies_e2)), index = time_steps_e2[0],
                columns =column_name) 
-    kde_plot=sns.kdeplot(data=df, shade=False)
+    kde_plot=sns.kdeplot(data=df2, shade=False)
     fig = kde_plot.get_figure()
     fig.savefig(f'kde_e2.png') 
+    df2.to_csv(f'./e2.csv') 
+    plt.clf()
+
+    ax=sns.kdeplot(data=df1, shade=False)
+    ax=sns.kdeplot(data=df2, shade=False)
+    # Get the two lines from the axes to generate shading
+    l1 = ax.lines[0]
+    l2 = ax.lines[1]
+
+    # Get the xy data from the lines so that we can shade
+    x1, y1 = l1.get_xydata().T
+    x2, y2 = l2.get_xydata().T
+
+    xmin = max(x1.min(), x2.min())
+    xmax = min(x1.max(), x2.max())
+    x = np.linspace(xmin, xmax, 100)
+    y1 = np.interp(x, x1, y1)
+    y2 = np.interp(x, x2, y2)
+    y = np.minimum(y1, y2)
+    #ax.fill_between(x, y, color="red", alpha=0.3)
+    fig = ax.get_figure()
+    fig.savefig(f'kde_e1_e2.png') 
     plt.clf()

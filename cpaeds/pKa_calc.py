@@ -1,4 +1,4 @@
-from cpAEDS.algorithms import pKa_from_df
+from cpaeds.algorithms import pKa_from_df
 
 pka = pKa_from_df(-41.98,300)
 print (pka)

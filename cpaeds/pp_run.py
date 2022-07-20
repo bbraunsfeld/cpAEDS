@@ -2,11 +2,11 @@ from contextlib import redirect_stderr
 import os
 import sys
 import subprocess
-from cpAEDS.utils import (load_config_yaml,get_dir_list,write_file,read_df,plot_offset_ratio,plot_offst_dG,
+from cpaeds.utils import (load_config_yaml,get_dir_list,write_file,read_df,plot_offset_ratio,plot_offst_dG,
                         check_finished,write_file2,read_output,plot_offset_pH,plot_offset_pH_fraction,density_plot)
-from cpAEDS.file_factory import build_dfmult_file,build_ene_ana,build_output
-from cpAEDS.AEDS_sampling import read_energyfile, calculate_statesampled,calc_prob_sampling,write_prob_sampling,calc_sampling,write_sampling
-from cpAEDS.algorithms import pKa_from_df, natural_keys
+from cpaeds.file_factory import build_dfmult_file,build_ene_ana,build_output
+from cpaeds.aeds_sampling import read_energyfile, calculate_statesampled,calc_prob_sampling,write_prob_sampling,calc_sampling,write_sampling
+from cpaeds.algorithms import pKa_from_df, natural_keys
 #'C:/Users/Bene/Documents/PhD/scripts/const_pH/tests/test_data/input_parameter.yaml')
 
 G_efile_template = "e%ss.dat"
@@ -100,8 +100,8 @@ def main():
                                         e1,t1 = read_energyfile(f'./e1.dat')
                                         e2,t2 = read_energyfile(f'./e2.dat')
                                         column_name.append(f'run{i+1}[{dG_list[-1]}]')
-                                        density_map_e1.append((e1,t1))
-                                        density_map_e2.append((e2,t2))
+                                        density_map_e1.append([e1,t1])
+                                        density_map_e2.append([e2,t2])
                                 else:
                                         pass
 

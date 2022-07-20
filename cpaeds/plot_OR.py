@@ -1,4 +1,4 @@
-from cpAEDS.utils import read_output, plot_offset_ratio,load_config_yaml,plot_offset_pH,plot_offset_pH_fraction
+from cpaeds.utils import read_output, plot_offset_ratio,load_config_yaml,plot_offset_pH,plot_offset_pH_fraction
 
 settings_loaded = load_config_yaml(
                 config= '../final_settings.yaml')

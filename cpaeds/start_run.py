@@ -1,7 +1,7 @@
 import os
 import subprocess
-from cpAEDS.utils import get_dir_list
-from cpAEDS.algorithms import natural_keys
+from cpaeds.utils import get_dir_list
+from cpaeds.algorithms import natural_keys
 
 if __name__ == "__main__":
     dir_list=get_dir_list()
