@@ -455,7 +455,7 @@ def density_plot(density_map_e1,density_map_e2,column_name):
     x = np.linspace(xmin, xmax, 100)
     y1 = np.interp(x, x1, y1)
     y2 = np.interp(x, x2, y2)
-    y = np.minimum(y1, y2)
+    #y = np.minimum(y1, y2)
     #ax.fill_between(x, y, color="red", alpha=0.3)
     fig = ax.get_figure()
     fig.savefig(f'kde_e1_e2.png') 
