@@ -426,7 +426,7 @@ def plot_offset_pH(offsets,fractions,settings_loaded):
     plt.savefig(f"offset_pH_reg.png",bbox_inches='tight')
     plt.clf()
 
-def density_plot(density_map_e1,density_map_e2,column_name):
+def density_plot(density_map_e1,density_map_e2,density_map_emix,column_name):
     energies_e1 = []
     time_steps_e1 = []
     for lst in density_map_e1:
@@ -439,6 +439,7 @@ def density_plot(density_map_e1,density_map_e2,column_name):
     fig.savefig(f'kde_e1.png') 
     df1.to_csv(f'./e1.csv') 
     plt.clf()
+    
     energies_e2 = []
     time_steps_e2 = []
     for lst in density_map_e2:
@@ -450,6 +451,19 @@ def density_plot(density_map_e1,density_map_e2,column_name):
     fig = kde_plot.get_figure()
     fig.savefig(f'kde_e2.png') 
     df2.to_csv(f'./e2.csv') 
+    plt.clf()
+
+    energies_emix = []
+    time_steps_emix = []
+    for lst in density_map_emix:
+        energies_emix.append(lst[0])
+        time_steps_emix.append(lst[1])  
+    df3 = pd.DataFrame(list(zip(*energies_emix)), index = time_steps_emix[0],
+               columns =column_name) 
+    kde_plot=sns.kdeplot(data=df3, shade=False)
+    fig = kde_plot.get_figure()
+    fig.savefig(f'kde_vmix.png') 
+    df3.to_csv(f'./vmix.csv') 
     plt.clf()
 
     ax=sns.kdeplot(data=df1, shade=False)

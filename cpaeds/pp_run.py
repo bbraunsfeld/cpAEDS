@@ -127,7 +127,7 @@ def main():
                 plot_offst_dG(offset,dG_list,1,settings_loaded)
                 plot_offset_pH(offset,fraction_state1,settings_loaded)
                 plot_offset_pH_fraction(offset,fraction_state1,settings_loaded)
-                density_plot(density_map_e1,density_map_e2,column_name)
+                density_plot(density_map_e1,density_map_e2,density_map_emix,column_name)
 
 if __name__ == "__main__":
         main()
