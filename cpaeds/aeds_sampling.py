@@ -2,6 +2,7 @@ import numpy as np
 import glob
 import argparse
 import statsmodels.api as sm
+from cpaeds.utils import read_energyfile
 #from statsmodels.graphics import tsaplots
 #import matplotlib.pyplot as plt
 #------------------------------
@@ -24,18 +25,6 @@ G_prob_outfile = "prob_statetser.dat"
 
 
 # Function definitions-----------------
-
-def read_energyfile(efile):
-    etraj = []
-    ttraj = []
-    with open(efile, "r") as inn:
-        for line in inn:
-            if line.startswith("#"):
-                continue
-            fields = line.split()
-            etraj.append(float(fields[1]))
-            ttraj.append(float(fields[0]))
-    return etraj, ttraj
 
 def calculate_probabilities(energys, temp, prob_state):
     # Straight away calculation
