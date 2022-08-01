@@ -285,6 +285,18 @@ def read_energyfile(efile):
             ttraj.append(float(fields[0]))
     return etraj, ttraj
 
+def read_state_file(file):
+    state_traj = []
+    ttraj = []
+    with open(file, 'r') as inp:
+        for line in inp:
+            if line.startswith('#'):
+                continue
+            fields = line.split()
+            state_traj.append(float(fields[1]))
+            ttraj.append(float(fields[0]))
+    return state_traj, ttraj
+
 def read_output(file):
     fraction_list = []
     offset_list = []
