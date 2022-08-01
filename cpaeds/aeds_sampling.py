@@ -66,7 +66,7 @@ def calc_prob_sampling(num_states, prob_state, time_step):
         print("State %s:\t%s Steps\t%s ps" % (sn, round(s_steps,2), round(s_steps * time_step,2)))
     print("\nTotal sampling: %s steps %s ps" % (round(total_sampling,0),round(total_sampling * time_step,0)))
 
-    # calculate avg lifetimes using autocorrelation function and seeing at  with lag decays to 0
+    # calculate avg lifetimes using autocorrelation function and seeing at with lag decays to 0
     print("\n# Endstates avg lifetimes")
     for i in range(num_states):
         sn = i+1
@@ -77,8 +77,11 @@ def calc_prob_sampling(num_states, prob_state, time_step):
             if (confidence[n][1] - autocorr[n]) > autocorr[n]:
                 lifetime = n+1
             n += 1
-
-        print("State %s lifetime: %s Steps %s ps" % (sn, lifetime, round(lifetime * time_step,2)))
+        
+        if lifetime == "NA":
+            print("State %s was not sampled" % (sn))
+        else:
+            print("State %s lifetime: %s Steps %s ps" % (sn, lifetime, round(lifetime * time_step,2)))
             
         #fig = tsaplots.plot_acf(prob_state[sn], lags=1000)
         #plt.show()
