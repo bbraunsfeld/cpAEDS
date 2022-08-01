@@ -439,7 +439,7 @@ def density_plot(density_map_e1,density_map_e2,density_map_emix,column_name):
     fig.savefig(f'kde_e1.png') 
     df1.to_csv(f'./e1.csv') 
     plt.clf()
-    
+
     energies_e2 = []
     time_steps_e2 = []
     for lst in density_map_e2:
@@ -485,4 +485,38 @@ def density_plot(density_map_e1,density_map_e2,density_map_emix,column_name):
     #ax.fill_between(x, y, color="red", alpha=0.3)
     fig = ax.get_figure()
     fig.savefig(f'kde_e1_e2.png') 
+    plt.clf()
+
+def state_density_plot(density_map_e1,density_map_e2,density_map_state,column_name):    
+    df_columns1 = ['e1','runs','states']
+    #df_columns2 = ['time_steps','e2','states']
+    energies_e1 = []
+    time_steps = []
+    energies_e2 = []
+    states = []
+    run_lst = []
+    lst_count = 0
+    for lst in density_map_e1:
+        for i in lst[0]:
+            energies_e1.append(i)
+        for t in lst[1]:
+            time_steps.append(t)
+        for i in range(len(lst[0])):
+            run_lst.append(column_name[lst_count])  
+        lst_count += 1
+    for lst in density_map_e2:
+        for i in lst[0]:
+            energies_e2.append(i)
+    for lst in density_map_state:
+        for i in lst[0]:
+            states.append(i) 
+    data_list = [energies_e1,run_lst,states]
+    df1 = pd.DataFrame(data=data_list, index = df_columns1)
+    df_t= df1.T
+    df_t.to_csv(f'./e1_state.csv') 
+    #df2 = pd.DataFrame(list(zip(energies_e1,states)), columns = df_columns2)
+    kde_plot=sns.kdeplot(data=df_t, hue=df_t[['runs', 'states']].apply(tuple, axis=1), shade=False)
+    fig = kde_plot.get_figure()
+    fig.savefig(f'kde_states.png') 
+    #df1.to_csv(f'./e1.csv') 
     plt.clf()

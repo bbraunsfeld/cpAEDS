@@ -3,7 +3,7 @@ import os
 import sys
 import subprocess
 from cpaeds.utils import (load_config_yaml,get_dir_list,write_file,read_energyfile,read_state_file,read_df,plot_offset_ratio,plot_offst_dG,
-                        check_finished,write_file2,read_output,plot_offset_pH,plot_offset_pH_fraction,density_plot)
+                        check_finished,write_file2,read_output,plot_offset_pH,plot_offset_pH_fraction,density_plot,state_density_plot)
 from cpaeds.file_factory import build_dfmult_file,build_ene_ana,build_output
 from cpaeds.aeds_sampling import calculate_statesampled,calc_prob_sampling,write_prob_sampling,calc_sampling,write_sampling
 from cpaeds.algorithms import pKa_from_df, natural_keys
@@ -128,6 +128,7 @@ def main():
                 plot_offset_pH(offset,fraction_state1,settings_loaded)
                 plot_offset_pH_fraction(offset,fraction_state1,settings_loaded)
                 density_plot(density_map_e1,density_map_e2,density_map_emix,column_name)
+                state_density_plot(density_map_e1,density_map_e2,density_map_state,column_name)
 
 if __name__ == "__main__":
         main()
