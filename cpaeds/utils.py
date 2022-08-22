@@ -412,8 +412,7 @@ def plot_offset_pH(offsets,fractions,settings_loaded):
     fig, ax1 = plt.subplots()
     
     color1 = '#377eb8'
-    ax1.set_xlabel('offset [kJ/mol]', color=color1
-)
+    ax1.set_xlabel('offset [kJ/mol]', color=color1)
     color2 = '#ff7f00'
     ax1.set_ylabel('pH', color=color2)
     ax1.scatter(x, ph)
