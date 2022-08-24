@@ -4,19 +4,22 @@ import logging
 import yaml
 import sys
 import time
+import gc
 from pathlib import Path
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 from numpy.polynomial.polynomial import polyfit 
 from numpy.polynomial import Polynomial
 import seaborn as sns
+import time
 from scipy import stats
 from scipy.optimize import curve_fit
 import pandas as pd 
 from cpaeds.algorithms import natural_keys, offset_steps, ph_curve
 from cpaeds.file_factory import build_ene_ana
-
+mpl.use('TkAgg')
 
 def load_config_yaml(config) -> dict:
     with open(f"{config}", "r") as stream:
@@ -335,7 +338,8 @@ def plot_offset_ratio(offsets,fractions,order,settings_loaded):
     plt.xlabel("offset [kJ/mol]")
     plt.ylabel("fraction of time")
     plt.savefig(f"offset_ratio_order_{order}.png")
-    plt.clf()
+    plt.close('all')
+    gc.collect()
 
 def plot_offst_dG(offsets,dG,order,settings_loaded):
     x=np.array(offsets)
@@ -351,7 +355,8 @@ def plot_offst_dG(offsets,dG,order,settings_loaded):
     plt.ylabel("dG [kJ/mol]")
     plt.legend(["data", "polyfit"], loc ="upper right")
     plt.savefig(f"offset_dG_order_{order}.png")
-    plt.clf()
+    plt.close('all')
+    gc.collect()
 
 def plot_offset_pH_fraction(offsets,fractions,settings_loaded):
     pka=4.89
@@ -394,7 +399,8 @@ def plot_offset_pH_fraction(offsets,fractions,settings_loaded):
     plt.legend(handles=[red_patch,blue_patch]) #green_patch,blue_patch])
     plt.title(f"{settings_loaded['system']['name']} with emin: -800 kJ/mol; emax: -150 kJ/mol") 
     plt.savefig(f"offset_pH_fraction.png",bbox_inches='tight')
-    plt.clf()
+    plt.close('all')
+gc.collect()
 
 def linear_regression(x,y):
     slope, intercept, r, p, std_err = stats.linregress(x, y)
@@ -423,7 +429,8 @@ def plot_offset_pH(offsets,fractions,settings_loaded):
     fig.tight_layout() 
     plt.title(f"{settings_loaded['system']['name']} with emin: -800 kJ/mol; emax: -150 kJ/mol") 
     plt.savefig(f"offset_pH_reg.png",bbox_inches='tight')
-    plt.clf()
+    plt.close('all')
+    gc.collect()
 
 def density_plot(density_map_e1,density_map_e2,density_map_emix,column_name):
     energies_e1 = []
@@ -437,7 +444,8 @@ def density_plot(density_map_e1,density_map_e2,density_map_emix,column_name):
     fig = kde_plot.get_figure()
     fig.savefig(f'kde_e1.png') 
     df1.to_csv(f'./e1.csv') 
-    plt.clf()
+    plt.close('all')
+    gc.collect()
 
     energies_e2 = []
     time_steps_e2 = []
@@ -450,7 +458,8 @@ def density_plot(density_map_e1,density_map_e2,density_map_emix,column_name):
     fig = kde_plot.get_figure()
     fig.savefig(f'kde_e2.png') 
     df2.to_csv(f'./e2.csv') 
-    plt.clf()
+    plt.close('all')
+    gc.collect()
 
     energies_emix = []
     time_steps_emix = []
@@ -463,7 +472,8 @@ def density_plot(density_map_e1,density_map_e2,density_map_emix,column_name):
     fig = kde_plot.get_figure()
     fig.savefig(f'kde_vmix.png') 
     df3.to_csv(f'./vmix.csv') 
-    plt.clf()
+    plt.close('all')
+    gc.collect()
 
     ax=sns.kdeplot(data=df1, shade=False)
     ax=sns.kdeplot(data=df2, shade=False)
@@ -484,11 +494,19 @@ def density_plot(density_map_e1,density_map_e2,density_map_emix,column_name):
     #ax.fill_between(x, y, color="red", alpha=0.3)
     fig = ax.get_figure()
     fig.savefig(f'kde_e1_e2.png') 
-    plt.clf()
+    plt.close('all')
+    gc.collect()
 
-def state_density_plot(density_map_e1,density_map_e2,density_map_state,column_name):    
-    df_columns1 = ['e1','runs','states']
-    #df_columns2 = ['time_steps','e2','states']
+def merge_columns(df,flds):
+    df['_'.join(flds)] =  pd.Series(df.reindex(flds, axis='columns')
+                                     .astype('str')
+                                     .values.tolist()
+                                  ).str.join('_')
+    hue = '_'.join(flds)
+    return df, hue
+
+def state_density_csv(density_map_e1,density_map_e2,density_map_state,column_name):    
+    df_columns = ['e1','e2','runs','states']
     energies_e1 = []
     time_steps = []
     energies_e2 = []
@@ -509,13 +527,30 @@ def state_density_plot(density_map_e1,density_map_e2,density_map_state,column_na
     for lst in density_map_state:
         for i in lst[0]:
             states.append(i) 
-    data_list = [energies_e1,run_lst,states]
-    df1 = pd.DataFrame(data=data_list, index = df_columns1)
-    df_t= df1.T
-    df_t.to_csv(f'./e1_state.csv') 
-    #df2 = pd.DataFrame(list(zip(energies_e1,states)), columns = df_columns2)
-    kde_plot=sns.kdeplot(data=df_t, hue=df_t[['runs', 'states']].apply(tuple, axis=1), shade=False)
-    fig = kde_plot.get_figure()
-    fig.savefig(f'kde_states.png') 
-    #df1.to_csv(f'./e1.csv') 
-    plt.clf()
+    data_list = [energies_e1,energies_e2,run_lst,states]
+    df = pd.DataFrame(data=data_list, index = df_columns)
+    df_t= df.T
+    df_t.to_csv(f'./e_state.csv') 
+
+def kde_ridge_plot(df,x,y="runs"):
+    sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
+    df_t1 = pd.read_csv(df)
+    df_t_melt,hue = merge_columns(df_t1,['runs', 'states'])
+    pal = sns.cubehelix_palette(len(df_t_melt[y].unique()), start=1.4, rot=-.25, light=.7, dark=.4)
+    g = sns.FacetGrid(df_t_melt, row=y, hue=y, aspect=20, height=.5, palette=pal)
+    g.map(sns.kdeplot, x, bw_adjust=.6, cut=5, clip_on=False, fill=True, alpha=1, linewidth=1.5)
+    g.map(sns.kdeplot, x, bw_adjust=.6, cut=5, clip_on=False, color="w", lw=2)
+    g.map(plt.axhline, y=0, linewidth=2, linestyle="-", color=None, clip_on=False)
+
+    def label(x, color, label):
+        ax = plt.gca()
+        ax.text(0, .1, label, fontweight="bold", color=color,
+                ha="left", va="center", transform=ax.transAxes)
+
+    g.map(label, y)
+    g.fig.subplots_adjust(hspace=-.7)
+    g.set(yticks=[], xlabel=x, ylabel="", xlim=(None, 0), title="")
+    g.despine(bottom=True, left=True)
+    plt.savefig(f'./kde_states_{x}.png') 
+    plt.close('all')
+    gc.collect()
