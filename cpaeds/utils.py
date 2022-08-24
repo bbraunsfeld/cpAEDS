@@ -6,20 +6,17 @@ import sys
 import time
 import gc
 from pathlib import Path
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 from numpy.polynomial.polynomial import polyfit 
 from numpy.polynomial import Polynomial
 import seaborn as sns
-import time
 from scipy import stats
 from scipy.optimize import curve_fit
 import pandas as pd 
 from cpaeds.algorithms import natural_keys, offset_steps, ph_curve
 from cpaeds.file_factory import build_ene_ana
-mpl.use('TkAgg')
 
 def load_config_yaml(config) -> dict:
     with open(f"{config}", "r") as stream:
