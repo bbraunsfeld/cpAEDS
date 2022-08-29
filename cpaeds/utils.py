@@ -86,6 +86,18 @@ def get_dir_list():
     dir_list.sort(key=natural_keys)
     return dir_list
 
+def get_file_list(file_ext: str):
+    current_path = os.getcwd()
+    contents = os.listdir(current_path)
+    file_list = []
+    for file in contents:
+    # check only text files
+        if file.endswith(file_ext):
+            file_list.append(file)
+    file_list.sort(key=natural_keys)
+    return file_list
+
+
 def check_dirs(settings_loaded):
     dir_list = get_dir_list()
     if os.path.basename(os.path.normpath(settings_loaded['system']['topo_dir'])) in dir_list:
