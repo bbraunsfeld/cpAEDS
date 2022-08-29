@@ -392,7 +392,7 @@ def plot_offset_pH_fraction(offsets,fractions,settings_loaded):
     #green_patch = mpatches.Patch(color='#4daf4a', label='eq_offset')
     blue_patch = mpatches.Patch(color='#ff7f00', label='exp_pKa')
     plt.legend(handles=[red_patch,blue_patch]) #green_patch,blue_patch])
-    plt.title(f"{settings_loaded['system']['name']} with emin: -800 kJ/mol; emax: -150 kJ/mol") 
+    plt.title(f"{settings_loaded['system']['name']} with emin: {settings_loaded['simulation']['parameters']['EMIN']}; emax: {settings_loaded['simulation']['parameters']['EMAX']}") 
     plt.savefig(f"offset_pH_fraction.png",bbox_inches='tight')
     plt.close('all')
 gc.collect()
@@ -422,7 +422,7 @@ def plot_offset_pH(offsets,fractions,settings_loaded):
     ax1.tick_params(axis='y', labelcolor=color2)
 
     fig.tight_layout() 
-    plt.title(f"{settings_loaded['system']['name']} with emin: -800 kJ/mol; emax: -150 kJ/mol") 
+    plt.title(f"{settings_loaded['system']['name']} with emin: {settings_loaded['simulation']['parameters']['EMIN']}; emax: {settings_loaded['simulation']['parameters']['EMAX']}") 
     plt.savefig(f"offset_pH_reg.png",bbox_inches='tight')
     plt.close('all')
     gc.collect()
