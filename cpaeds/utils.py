@@ -276,12 +276,13 @@ def start_prod_run(settings_loaded,dir):
 """
 
 def read_df(file):
+    df = 'NaN'
     with open(file, "r") as inn:
          for line in inn:
             if f"DF_2_1" in line:
                 fields = line.split()
                 df = float(fields[1])
-    return df  
+    return df
 
 def read_energyfile(efile):
     etraj = []

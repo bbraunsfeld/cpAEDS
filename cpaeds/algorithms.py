@@ -20,10 +20,14 @@ def offset_steps(EIR_start,EIR_range,EIR_step_size):
     return offset_list
 
 def pKa_from_df(df,temp):
-    k = 0.00831451
-    Ka = math.exp(-(df/(k*temp)))
-    pKa = -math.log10(Ka)
-    return pKa
+    if df == 'NaN':
+        pKa = 'NaN'
+        return pKa
+    else:    
+        k = 0.00831451
+        Ka = math.exp(-(df/(k*temp)))
+        pKa = -math.log10(Ka)
+        return pKa
 
 
 def ph_curve(pka,fraction):

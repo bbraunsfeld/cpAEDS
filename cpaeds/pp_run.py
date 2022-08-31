@@ -98,6 +98,8 @@ def main():
                                         stdout=sp)
 
                                 dG_list.append(read_df('./df.out'))
+                                pka_dG_list.append(pKa_from_df(read_df('./df.out'),int(settings_loaded['simulation']['parameters']['temp'])))
+                                
                                 if fraction_list[-1][0] > 0.15 and fraction_list[-1][0] < 0.85:
                                         e1,t1 = read_energyfile(f'./e1.dat')
                                         e2,t2 = read_energyfile(f'./e2.dat')
@@ -111,7 +113,6 @@ def main():
                                 else:
                                         pass
 
-                                pka_dG_list.append(pKa_from_df(read_df('./df.out'),int(settings_loaded['simulation']['parameters']['temp'])))
                 for offset in  settings_loaded['simulation']['parameters']['EIR_list']:    
                         pka_offset_list.append(pKa_from_df(offset,int(settings_loaded['simulation']['parameters']['temp'])))
                 os.chdir(f"{pdir}")
