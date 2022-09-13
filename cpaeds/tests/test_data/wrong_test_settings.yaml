@@ -3,8 +3,8 @@
 system:
 ################
   name: 'test_system'
-  system_dir: '/home/bbraun/cpAEDS/cpaeds/tests/test_data'
-  md_dir: '/pool/bbraun/propionic_acid_54a8/md_propionic_acid/'
+  system_dir: '/pool/bbraun/propionic_acid_54a8/'
+  md_dir: 
   output_dir_name: 'test_output'
   topo_file: '/pool/bbraun/propionic_acid_54a8/topo/propionic_acid_54a8_pH.top'
   pert_file: '/pool/bbraun/propionic_acid_54a8/topo/pert_eds.ptp'

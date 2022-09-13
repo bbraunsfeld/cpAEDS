@@ -23,6 +23,7 @@ class SetupSystem(object):
         self.output_dir: str = settings['system']['output_dir_name']
         self.topology_file: str = settings['system']['topo_file']
         self.pertubation_file: str = settings['system']['pert_file']
+        self.sys_dir: str = settings['system']['system_dir']
 
     def check_input_settings(self):
         """
@@ -33,17 +34,14 @@ class SetupSystem(object):
         topo_file: Path to the topology file. (same as for the MDs) [.top] 
         pert_file: Path to the pertubation file. [.ptp]
         """
-        mddir_exists = False
         outdir_exists = False
         topo_exists = False
         pert_exists = False
         if self.md_dir:
-            mddir_exists = True
-            if mddir_exists == True:
-                logger.info(f"MD folder set to {self.md_dir}")
-            else:
-                logger.critical("Missing MD folder argument.")
-                sys.exit("Error changing to output folder directory.")
+            logger.info(f"MD folder set to {self.md_dir}")
+        else:
+            logger.critical(f"Missing MD folder argument.")
+            sys.exit(f"Error changing to output folder directory.")
         if self.output_dir:
             outdir_exists = True
             if outdir_exists == True:
@@ -70,15 +68,13 @@ class SetupSystem(object):
                 logger.critical("No pertubation file (.ptp) argument.")
                 sys.exit("Error changing to output folder directory.")
 
-
-
-
-
-    def check_system_dir(settings_loaded):
-        if settings_loaded['system']['system_dir'] == os.path.dirname(os.path.abspath(__file__)):
+    def check_system_dir(self):
+        if self.sys_dir == os.path.dirname(os.path.abspath(__file__)):
             pass
         else:
-            os.chdir(settings_loaded['system']['system_dir'])
+            os.chdir(self.sys_dir)
+
+
 
     def check_dirs(settings_loaded):
         dir_list = get_dir_list()

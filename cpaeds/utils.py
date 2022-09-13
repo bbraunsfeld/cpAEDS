@@ -32,6 +32,12 @@ def dumb_full_config_yaml(settings_loaded):
     with open(f"final_settings.yaml", 'w') as file:
         yaml.dump(settings_loaded, file)
 
+def read_last_line(f):
+    f.seek(-2, 2)              # Jump to the second last byte.
+    while f.read(1) != b"\n":  # Until EOL is found ...
+        f.seek(-2, 1)          # ... jump back, over the read byte plus one more.
+    return f.read() 
+
 def check_system_settings(settings_loaded):
     mddir_exists = False
     outdir_exists = False
