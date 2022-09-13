@@ -34,59 +34,53 @@ class SetupSystem(object):
         topo_file: Path to the topology file. (same as for the MDs) [.top] 
         pert_file: Path to the pertubation file. [.ptp]
         """
-        outdir_exists = False
-        topo_exists = False
-        pert_exists = False
         if self.md_dir:
             logger.info(f"MD folder set to {self.md_dir}")
         else:
             logger.critical(f"Missing MD folder argument.")
             sys.exit(f"Error changing to output folder directory.")
         if self.output_dir:
-            outdir_exists = True
-            if outdir_exists == True:
-                logger.info(f"Output folder name set to {self.output_dir}.")
-            else:
-                self.output_dir: str = 'prod_runs'
-                logger.info(f"Output folder name set to {self.output_dir}.")
+            logger.info(f"Output folder name set to {self.output_dir}.")
+        else:
+            self.output_dir: str = 'prod_runs'
+            logger.info(f"Output folder name set to {self.output_dir}.")
         if self.topology_file:
-            topo_exists = True
-            if topo_exists == True:
-                self.topo_dir: str = os.path.dirname(self.topology_file)
-                logger.info(f"Topo folder set to {self.topo_dir}.")
-                self.topology_file: str = os.path.basename(os.path.normpath(self.topology_file))
-                logger.info(f"Topo file set to {self.topology_file}.")
-            else:
-                logger.critical("Missing topo file argument.")
-                sys.exit("Error changing to output folder directory.")
+            self.topo_dir: str = os.path.dirname(self.topology_file)
+            logger.info(f"Topo folder set to {self.topo_dir}.")
+            self.topology_file: str = os.path.basename(os.path.normpath(self.topology_file))
+            logger.info(f"Topo file set to {self.topology_file}.")
+        else:
+            logger.critical("Missing topo file argument.")
+            sys.exit("Error changing to output folder directory.")
         if self.pertubation_file:
-            pert_exists = True
-            if pert_exists == True:
-                self.pertubation_file: str = os.path.basename(os.path.normpath(self.pertubation_file))
-                logger.info(f"Pertubation file set to {self.pertubation_file}.")
-            else:
-                logger.critical("No pertubation file (.ptp) argument.")
-                sys.exit("Error changing to output folder directory.")
+            self.pertubation_file: str = os.path.basename(os.path.normpath(self.pertubation_file))
+            logger.info(f"Pertubation file set to {self.pertubation_file}.")
+        else:
+            logger.critical("No pertubation file (.ptp) argument.")
+            sys.exit("Error changing to output folder directory.")
 
     def check_system_dir(self):
+        """Checking if current dir is simulation dir"""
         if self.sys_dir == os.path.dirname(os.path.abspath(__file__)):
             pass
         else:
             os.chdir(self.sys_dir)
 
-
-
-    def check_dirs(settings_loaded):
-        dir_list = get_dir_list()
-        if os.path.basename(os.path.normpath(settings_loaded['system']['topo_dir'])) in dir_list:
-            print("Topo folder found.")
+    def check_dirs(self,settings_loaded):
+        """Checking if path to input dir exist"""
+        self.dir_list = get_dir_list()
+        if os.path.basename(os.path.normpath(self.topo_dir)) in self.dir_list:
+            logger.info(f"Topo folder found.")
         else:
-            print("Missing topo folder.")
-        if os.path.basename(os.path.normpath(settings_loaded['system']['md_dir'])) in dir_list:
+            logger.critical(f"Missing topo folder.")
+
+
+
+        if os.path.basename(os.path.normpath(settings_loaded['system']['md_dir'])) in self.dir_list:
             print("MD folder found.")
         else:
             print("Missing MD folder.")
-        if 'aeds' in dir_list:
+        if 'aeds' in self.dir_list:
             settings_loaded['system']['aeds_dir'] = f"{settings_loaded['system']['system_dir']}/aeds"
             print("aeds folder already exists.")
         else:
