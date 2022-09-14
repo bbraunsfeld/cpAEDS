@@ -3,7 +3,7 @@
 system:
 ################
   name: 'test_system'
-  system_dir: '/home/bbraun/cpAEDS/cpaeds/tests/test_data'
+  system_dir: '/pool/bbraun/propionic_acid_54a8/'
   md_dir: '/pool/bbraun/propionic_acid_54a8/md_propionic_acid/'
   output_dir_name: 'test_output'
   topo_file: '/pool/bbraun/propionic_acid_54a8/topo/propionic_acid_54a8_pH.top'
@@ -21,7 +21,7 @@ simulation:
     NSTLIM: 1000
     NTPR: 100
     NTWX: 1000
-    NTWE: 100
+    NTWE: 
     dt: 0.002
     EMIN: -600
     EMAX: -150
