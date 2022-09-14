@@ -25,6 +25,7 @@ class SetupSystem(object):
         self.topology_file: str = self.config['system']['topo_file']
         self.pertubation_file: str = self.config['system']['pert_file']
         self.sys_dir: str = self.config['system']['system_dir']
+        self.dir_list = None
 
     def check_input_settings(self):
         """
@@ -46,7 +47,9 @@ class SetupSystem(object):
             self.output_dir: str = 'prod_runs'
             logger.info(f"Output folder name set to {self.output_dir}.")
         if self.topology_file:
+            logger.debug(os.path.dirname(self.topology_file))
             self.topo_dir: str = os.path.dirname(self.topology_file)
+            print(self.topo_dir)
             logger.info(f"Topo folder set to {self.topo_dir}.")
             self.topology_file: str = os.path.basename(os.path.normpath(self.topology_file))
             logger.info(f"Topo file set to {self.topology_file}.")
@@ -67,7 +70,7 @@ class SetupSystem(object):
         else:
             os.chdir(self.sys_dir)
 
-    def check_dirs(self):
+    def check_input_dirs(self):
         """Checking if path to input dir exist"""
         self.dir_list = get_dir_list()
         if os.path.basename(os.path.normpath(self.topo_dir)) in self.dir_list:

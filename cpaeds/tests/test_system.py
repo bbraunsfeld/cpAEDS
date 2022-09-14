@@ -32,7 +32,7 @@ def test_check_input_settings_wrong():
     system = SetupSystem(settings)
     with pytest.raises(SystemExit) as excinfo:
         SetupSystem.check_input_settings(system)
-        
+
     assert excinfo.value.code == f"Error changing to output folder directory."
 
 def test_check_sys_dir():
@@ -44,3 +44,15 @@ def test_check_sys_dir():
     SetupSystem.check_system_dir(system)
 
     assert os.getcwd() == f"{path}/cpaeds/tests/test_data"
+
+def test_check_input_dirs():
+    """Sample test, will pass if work_dir is changed to simulation_dir from test_settings.yaml."""
+    path = os.getcwd()
+    settings = load_config_yaml(
+            config= f'{path}/cpaeds/tests/test_data/test_settings.yaml')
+    system = SetupSystem(settings)
+    SetupSystem.check_input_settings(system)
+    SetupSystem.check_system_dir(system)
+    SetupSystem.check_input_dirs(system)
+    
+    assert os.path.isdir('aeds') == True

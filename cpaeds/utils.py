@@ -32,7 +32,7 @@ def dumb_full_config_yaml(settings_loaded):
     with open(f"final_settings.yaml", 'w') as file:
         yaml.dump(settings_loaded, file)
 
-def read_last_line(f):
+def read_last_line(f) -> str:
     f.seek(-2, 2)              # Jump to the second last byte.
     while f.read(1) != b"\n":  # Until EOL is found ...
         f.seek(-2, 1)          # ... jump back, over the read byte plus one more.
@@ -174,7 +174,7 @@ def check_simulation_settings(settings_loaded):
         settings_loaded['simulation']['parameters'].get('EIR_step_size') == None
     ):
         raise KeyError("Parameterset is not complete")
-
+# pp
 def check_finished(settings_loaded):
     omd_list = []
     run_complete = False
@@ -187,7 +187,7 @@ def check_finished(settings_loaded):
 
     return run_complete, len(omd_list)
 
-
+#### creating folders ####
 def create_offsets(settings_loaded):
     offset_list = offset_steps(settings_loaded['simulation']['parameters']['EIR_start'],
                                 settings_loaded['simulation']['parameters']['EIR_range'],settings_loaded['simulation']['parameters']['EIR_step_size'])
@@ -280,7 +280,7 @@ def start_prod_run(settings_loaded,dir):
         )
     exe.check_returncode()
 """
-
+#### analysis ####
 def read_df(file):
     df = 'NaN'
     with open(file, "r") as inn:
