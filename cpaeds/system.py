@@ -27,7 +27,7 @@ class SetupSystem(object):
         self.sys_dir: str = self.config['system']['system_dir']
         self.dir_list = None
 
-    def check_input_settings(self):
+    def __check_input_settings(self):
         """
         A function that checks for the existence of the input files for a simulation.
         ----------
@@ -63,14 +63,14 @@ class SetupSystem(object):
             logger.critical(f"No pertubation file (.ptp) argument.")
             sys.exit(f"Error changing to output folder directory.")
 
-    def check_system_dir(self):
+    def __check_system_dir(self):
         """Checking if current dir is simulation dir"""
         if self.sys_dir == os.path.dirname(os.path.abspath(__file__)):
             pass
         else:
             os.chdir(self.sys_dir)
 
-    def check_input_dirs(self):
+    def __check_input_dirs(self):
         """Checking if path to input dir exist"""
         self.dir_list = get_dir_list()
         if os.path.basename(os.path.normpath(self.topo_dir)) in self.dir_list:
@@ -92,7 +92,7 @@ class SetupSystem(object):
             self.aeds_dir = f"{self.sys_dir}/aeds"
             logger.info(f"aeds folder created.")
 
-    def check_input_files(self):
+    def __check_input_files(self):
         """Checking if the input files .topo, .ptp, .cnf & .imd exist"""
         files = [f for f in os.listdir(self.topo_dir) if os.path.isfile(os.path.join(self.topo_dir, f))]
         if  self.topology_file in files:
@@ -119,7 +119,7 @@ class SetupSystem(object):
         self.ref_imd = f"{imd_list[-1]}" 
         logger.info(f"{self.ref_imd} found.")
 
-    def check_simulation_settings(self):
+    def __check_simulation_settings(self):
         """Checks if the set of input parameter in the settings.yaml is complete"""
         if self.config['simulation']['NSTATS']:
             if int(self.config['simulation']['NSTATS']) > 1:
@@ -146,4 +146,11 @@ class SetupSystem(object):
             self.config['simulation']['parameters'].get('EIR_range') == None or
             self.config['simulation']['parameters'].get('EIR_step_size') == None
         ):
-            raise KeyError("Parameterset is not complete")
+            sys.exit(f"Error missing simulation parameter.")
+
+    def run_checks(self):
+        self.__check_input_settings()
+        self.__check_system_dir()
+        self.__check_input_dirs()
+        self.__check_input_files()
+        self.__check_simulation_settings()
