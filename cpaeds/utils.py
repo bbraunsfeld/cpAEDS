@@ -10,6 +10,7 @@ import numpy as np
 from numpy.polynomial.polynomial import polyfit 
 from numpy.polynomial import Polynomial
 import seaborn as sns
+import subprocess
 from scipy import stats
 from scipy.optimize import curve_fit
 import pandas as pd 
@@ -186,6 +187,22 @@ def check_finished(settings_loaded):
         run_complete = True
 
     return run_complete, len(omd_list)
+
+def check_job_running(user,dir):
+    with open('running_jobs.out', 'w+') as outfile:
+        exe = subprocess.run(
+                ['squeue', '-u', user],
+                check=True,
+                stdout=outfile,
+                capture_output= False,
+                text=True,
+            )
+    exe.check_returncode()
+    with open('running_jobs.out', 'r') as paths:
+        for line in paths:
+            if f"{dir} " in line:
+                return True
+    os.remove('running_jobs.out') 
 
 #### creating folders ####
 def create_offsets(settings_loaded):

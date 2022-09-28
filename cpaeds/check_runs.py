@@ -2,7 +2,7 @@ import os
 from cpaeds.utils import load_config_yaml,get_dir_list,check_finished
 
 
-if __name__ == "__main__":
+def main():
         settings_loaded = load_config_yaml(
                 config= './final_settings.yaml')
 
@@ -20,4 +20,7 @@ if __name__ == "__main__":
                 print("Runs finished.")
         else:
                 res = list(filter(lambda i: not status_list[i], range(len(status_list))))
-                print (f"Run str(res) not finished.")
+                print (f"Run {res} not finished.")
+
+if __name__ == "__main__":
+        main()
