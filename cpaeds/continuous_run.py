@@ -1,8 +1,7 @@
 
 import os
 from cpaeds.logger import LoggerFactory
-from cpaeds.utils import (load_config_yaml,get_dir_list,get_file_list,write_file,read_energyfile,read_state_file,read_df,plot_offset_ratio,plot_offst_dG,
-                        check_finished,write_file2,read_output,plot_offset_pH,plot_offset_pH_fraction,density_plot,state_density_csv,kde_ridge_plot)
+from cpaeds.utils import (load_config_yaml,get_dir_list,get_file_list)
 from cpaeds.algorithms import natural_keys
 
 logger = LoggerFactory.get_logger("system.py", log_level="INFO", file_name = "debug.log")
@@ -42,7 +41,10 @@ def main():
                                     for line in inp:
                                             replacement = replacement + line
                                     changes = f"cd ${{SIMULDIR}}/../{settings_loaded['system']['output_dir_name']}_{len(dir_list)-1}" +  '\n'
-                                    changes = changes +  f"sbatch --ntasks ${{SLURM_NTASKS}} --cpus-per-task ${{SLURM_CPUS_PER_TASK}} --gres=mps:$(scontrol show job ${{SLURM_JOB_ID}} | grep gres/mps | sed \"s/^.*gres\/mps=//\") --mem ${{SLURM_MEM_PER_NODE}} --partition ${{SLURM_JOB_PARTITION}} --time $(scontrol show job ${{SLURM_JOB_ID}} | grep TimeLimit | sed \"s/^.*TimeLimit=//\" | cut -d\" \" -f1) {file_list[0]}"
+                                    if settings_loaded['system']['lib_type'] == f"cuda":
+                                        changes = changes +  f"sbatch --ntasks ${{SLURM_NTASKS}} --cpus-per-task ${{SLURM_CPUS_PER_TASK}} --gres=mps:$(scontrol show job ${{SLURM_JOB_ID}} | grep gres/mps | sed \"s/^.*gres\/mps=//\") --mem ${{SLURM_MEM_PER_NODE}} --partition ${{SLURM_JOB_PARTITION}} --time $(scontrol show job ${{SLURM_JOB_ID}} | grep TimeLimit | sed \"s/^.*TimeLimit=//\" | cut -d\" \" -f1) {file_list[0]}"
+                                    elif settings_loaded['system']['lib_type'] == f"cuda_local":
+                                        changes = changes + f"./{file_list[0]}"
                                     replacement = replacement + changes
                                 with open(file_list[-1],'w+') as file:
                                     file.write(replacement)
@@ -68,7 +70,10 @@ def main():
                                         changes = ""
                                     else:
                                         changes = f"cd ${{SIMULDIR}}/../{settings_loaded['system']['output_dir_name']}_{i}" +  '\n'
-                                        changes = changes +  f"sbatch --ntasks ${{SLURM_NTASKS}} --cpus-per-task ${{SLURM_CPUS_PER_TASK}} --gres=mps:$(scontrol show job ${{SLURM_JOB_ID}} | grep gres/mps | sed \"s/^.*gres\/mps=//\") --mem ${{SLURM_MEM_PER_NODE}} --partition ${{SLURM_JOB_PARTITION}} --time $(scontrol show job ${{SLURM_JOB_ID}} | grep TimeLimit | sed \"s/^.*TimeLimit=//\" | cut -d\" \" -f1) {file_list[0]}"
+                                        if settings_loaded['system']['lib_type'] == f"cuda":
+                                            changes = changes +  f"sbatch --ntasks ${{SLURM_NTASKS}} --cpus-per-task ${{SLURM_CPUS_PER_TASK}} --gres=mps:$(scontrol show job ${{SLURM_JOB_ID}} | grep gres/mps | sed \"s/^.*gres\/mps=//\") --mem ${{SLURM_MEM_PER_NODE}} --partition ${{SLURM_JOB_PARTITION}} --time $(scontrol show job ${{SLURM_JOB_ID}} | grep TimeLimit | sed \"s/^.*TimeLimit=//\" | cut -d\" \" -f1) {file_list[0]}"
+                                        elif settings_loaded['system']['lib_type'] == f"cuda_local":
+                                            changes = changes + f"./{file_list[0]}"
                                     replacement = replacement + changes
                                 with open(file_list[-1],'w+') as file:
                                     file.write(replacement)
@@ -86,7 +91,10 @@ def main():
                                     for line in inp:
                                             replacement = replacement + line
                                     changes = f"cd ${{SIMULDIR}}/../{settings_loaded['system']['output_dir_name']}_{i+2}" +  '\n'
-                                    changes = changes +  f"sbatch --ntasks ${{SLURM_NTASKS}} --cpus-per-task ${{SLURM_CPUS_PER_TASK}} --gres=mps:$(scontrol show job ${{SLURM_JOB_ID}} | grep gres/mps | sed \"s/^.*gres\/mps=//\") --mem ${{SLURM_MEM_PER_NODE}} --partition ${{SLURM_JOB_PARTITION}} --time $(scontrol show job ${{SLURM_JOB_ID}} | grep TimeLimit | sed \"s/^.*TimeLimit=//\" | cut -d\" \" -f1) {file_list[0]}"
+                                    if settings_loaded['system']['lib_type'] == f"cuda":
+                                        changes = changes +  f"sbatch --ntasks ${{SLURM_NTASKS}} --cpus-per-task ${{SLURM_CPUS_PER_TASK}} --gres=mps:$(scontrol show job ${{SLURM_JOB_ID}} | grep gres/mps | sed \"s/^.*gres\/mps=//\") --mem ${{SLURM_MEM_PER_NODE}} --partition ${{SLURM_JOB_PARTITION}} --time $(scontrol show job ${{SLURM_JOB_ID}} | grep TimeLimit | sed \"s/^.*TimeLimit=//\" | cut -d\" \" -f1) {file_list[0]}"
+                                    elif settings_loaded['system']['lib_type'] == f"cuda_local":
+                                        changes = changes + f"./{file_list[0]}"
                                     replacement = replacement + changes
                                 with open(file_list[-1],'w+') as file:
                                     file.write(replacement)
@@ -112,7 +120,10 @@ def main():
                                         changes = ""
                                     else:
                                         changes = f"cd ${{SIMULDIR}}/../{settings_loaded['system']['output_dir_name']}_{i+2}" +  '\n'
-                                        changes = changes +  f"sbatch --ntasks ${{SLURM_NTASKS}} --cpus-per-task ${{SLURM_CPUS_PER_TASK}} --gres=mps:$(scontrol show job ${{SLURM_JOB_ID}} | grep gres/mps | sed \"s/^.*gres\/mps=//\") --mem ${{SLURM_MEM_PER_NODE}} --partition ${{SLURM_JOB_PARTITION}} --time $(scontrol show job ${{SLURM_JOB_ID}} | grep TimeLimit | sed \"s/^.*TimeLimit=//\" | cut -d\" \" -f1) {file_list[0]}"
+                                        if settings_loaded['system']['lib_type'] == f"cuda":
+                                            changes = changes +  f"sbatch --ntasks ${{SLURM_NTASKS}} --cpus-per-task ${{SLURM_CPUS_PER_TASK}} --gres=mps:$(scontrol show job ${{SLURM_JOB_ID}} | grep gres/mps | sed \"s/^.*gres\/mps=//\") --mem ${{SLURM_MEM_PER_NODE}} --partition ${{SLURM_JOB_PARTITION}} --time $(scontrol show job ${{SLURM_JOB_ID}} | grep TimeLimit | sed \"s/^.*TimeLimit=//\" | cut -d\" \" -f1) {file_list[0]}"
+                                        elif settings_loaded['system']['lib_type'] == f"cuda_local":
+                                            changes = changes + f"./{file_list[0]}"
                                     replacement = replacement + changes
                                 with open(file_list[-1],'w+') as file:
                                     file.write(replacement)

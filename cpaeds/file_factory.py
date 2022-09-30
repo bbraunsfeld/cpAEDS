@@ -9,6 +9,10 @@ def build_mk_script_file(settings_loaded,dir_path):
     cnf = settings_loaded['system']['cnf_file']
     pert = settings_loaded['system']['pert_file']
     version = settings_loaded['system']['version']
+    if settings_loaded['system']['lib_type'] == f"cuda":
+        lib = f'mk_script_cuda_8_slurm.lib'
+    elif settings_loaded['system']['lib_type'] == f"cuda_local":
+        lib=f'mk_script_cuda_8.lib'
     body = f"""@sys            aeds_{name}
 @bin           {md_engine}
 @dir           {dir_path}
@@ -17,7 +21,7 @@ def build_mk_script_file(settings_loaded,dir_path):
   input         aeds.imd
   coord        ../../../{md_dir_name}/{cnf}
   pttopo       ../../../topo/{pert}
-@template       mk_script_cuda_8_slurm.lib
+@template       {lib}
 @version        {version}
 @joblist        aeds.job"""
     return body
@@ -85,6 +89,7 @@ def scrap_ref_imd(settings_loaded):
                     
 def build_imd_file(settings_loaded,EIR,rs):
     date = datetime.date.today()
+    NSTATES = settings_loaded['simulation']['NSTATES']
     NSTLIM = settings_loaded['simulation']['parameters']['NSTLIM']
     NTPR = settings_loaded['simulation']['parameters']['NTPR']
     NTWX = settings_loaded['simulation']['parameters']['NTWX']
@@ -92,6 +97,14 @@ def build_imd_file(settings_loaded,EIR,rs):
     dt = settings_loaded['simulation']['parameters']['dt']
     EMIN = settings_loaded['simulation']['parameters']['EMIN']
     EMAX = settings_loaded['simulation']['parameters']['EMAX']
+    if settings_loaded['system']['lib_type'] == f"cuda":
+        print("i am here")
+        ALPHLJ='0'  
+        ALPHCRF='0'
+    elif settings_loaded['system']['lib_type'] == f"cuda_local":
+        print("i am there")
+        ALPHLJ=''  
+        ALPHCRF=''
     rnd_seed = 210184 + rs
     b1,b2=scrap_ref_imd(settings_loaded)
     body = f"""TITLE
@@ -132,9 +145,9 @@ AEDS
 #     AEDS
          1
 #   ALPHLJ   ALPHCRF      FORM      NUMSTATES
-         0         0         1              2
+    {ALPHLJ} {ALPHCRF}       1      {NSTATES}
 #     EMAX      EMIN
-      {EMAX}    {EMIN}
+    {EMAX}    {EMIN}
 # EIR [1..NUMSTATES]
          0      {EIR}
 # NTIAEDSS  RESTREMIN  BMAXTYPE      BMAX    ASTEPS    BSTEPS

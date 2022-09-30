@@ -22,7 +22,10 @@ def create_prod_run(settings_loaded):
         eir_counter = 0
         for dir in dir_list:
             os.chdir(f"{pdir}/{dir}")
-            copy_lib_file(os.getcwd(),'mk_script_cuda_8_slurm.lib')
+            if settings_loaded['system']['lib_type'] == f"cuda":
+                copy_lib_file(os.getcwd(),'mk_script_cuda_8_slurm.lib')
+            elif settings_loaded['system']['lib_type'] == f"cuda_local":
+                  copy_lib_file(os.getcwd(),'mk_script_cuda_8.lib')
             mk_script_body =  build_mk_script_file(settings_loaded,os.getcwd())
             write_file(mk_script_body,'aeds_mk_script.arg')
             job_file_body = build_job_file(settings_loaded)
@@ -38,7 +41,7 @@ def create_prod_run(settings_loaded):
             else:
                 print('Running mk_script...')
                 exe = subprocess.run(
-                    ['mk_script', '@f', 'aeds_mk_script.arg'],
+                    [settings_loaded['system']['path_to_mk_script'], '@f', 'aeds_mk_script.arg'],
                     check=True,
                     capture_output=True,
                     text=True
