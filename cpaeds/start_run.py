@@ -19,6 +19,7 @@ def initialise():
             run_list=[]
             omd_list=[]
             for file in files:
+                #logic error to fix. Errors: omd 2 has shake error. Run is still added and omd position is at the file with shake failure.
                 if file.endswith('.run'):
                     run_list.append(file)
                 if file.endswith('.omd'):
