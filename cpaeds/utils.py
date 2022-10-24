@@ -463,45 +463,47 @@ def plot_offset_pH(offsets,fractions,settings_loaded):
     plt.close('all')
     gc.collect()
 
-def density_plot(density_map_e1,density_map_e2,density_map_emix,column_name):
-    energies_e1 = []
-    time_steps_e1 = []
-    for lst in density_map_e1:
-        energies_e1.append(lst[0])
-        time_steps_e1.append(lst[1])  
-    df1 = pd.DataFrame(list(zip(*energies_e1)), index = time_steps_e1[0],
+def density_map_to_df(density_map,column_name):
+    energies = []
+    time_steps = []
+    for lst in density_map:
+        energies.append(lst[0])
+        time_steps.append(lst[1])  
+    df = pd.DataFrame(list(zip(*energies)), index = time_steps[0],
                columns = column_name) 
+    return df
+
+def density_map_to_concat_df(density_map,column_name):
+    energies = []
+    time_steps = []
+    for lst in density_map:
+        energies.extend(lst[0])
+        time_steps.extend(lst[1])  
+    df = pd.DataFrame(energies, index = time_steps,
+               columns = column_name) 
+    df.to_csv(f'./{column_name[0]}.csv') 
+
+def density_plot(density_map_e1,density_map_e2,density_map_emix,column_name):
+    df1=density_map_to_df(density_map_e1,column_name)
     kde_plot=sns.kdeplot(data=df1, shade=False)
     fig = kde_plot.get_figure()
     fig.savefig(f'kde_e1.png') 
-    df1.to_csv(f'./e1.csv') 
+    df1.to_csv(f'./e1.csv')  
     plt.close('all')
     gc.collect()
 
-    energies_e2 = []
-    time_steps_e2 = []
-    for lst in density_map_e2:
-        energies_e2.append(lst[0])
-        time_steps_e2.append(lst[1])  
-    df2 = pd.DataFrame(list(zip(*energies_e2)), index = time_steps_e2[0],
-               columns =column_name) 
+    df2=density_map_to_df(density_map_e2,column_name)
     kde_plot=sns.kdeplot(data=df2, shade=False)
     fig = kde_plot.get_figure()
     fig.savefig(f'kde_e2.png') 
-    df2.to_csv(f'./e2.csv') 
+    df2.to_csv(f'./e2.csv')  
     plt.close('all')
     gc.collect()
 
-    energies_emix = []
-    time_steps_emix = []
-    for lst in density_map_emix:
-        energies_emix.append(lst[0])
-        time_steps_emix.append(lst[1])  
-    df3 = pd.DataFrame(list(zip(*energies_emix)), index = time_steps_emix[0],
-               columns =column_name) 
+    df3=density_map_to_df(density_map_emix,column_name)
     kde_plot=sns.kdeplot(data=df3, shade=False)
     fig = kde_plot.get_figure()
-    fig.savefig(f'kde_vmix.png') 
+    fig.savefig(f'kde_vmix.png')  
     df3.to_csv(f'./vmix.csv') 
     plt.close('all')
     gc.collect()
