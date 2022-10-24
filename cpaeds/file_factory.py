@@ -98,11 +98,9 @@ def build_imd_file(settings_loaded,EIR,rs):
     EMIN = settings_loaded['simulation']['parameters']['EMIN']
     EMAX = settings_loaded['simulation']['parameters']['EMAX']
     if settings_loaded['system']['lib_type'] == f"cuda":
-        print("i am here")
         ALPHLJ='0'  
         ALPHCRF='0'
     elif settings_loaded['system']['lib_type'] == f"cuda_local":
-        print("i am there")
         ALPHLJ=''  
         ALPHCRF=''
     rnd_seed = 210184 + rs
@@ -152,6 +150,13 @@ AEDS
          0      {EIR}
 # NTIAEDSS  RESTREMIN  BMAXTYPE      BMAX    ASTEPS    BSTEPS
          1          1         2         2       500     10000
+END"""
+
+    if settings_loaded['system']['lib_type'] == f"cuda" or settings_loaded['system']['lib_type'] == f"cuda_local":
+        body += F"""
+INNERLOOP
+#     NTILM      NTILS      NGPUS      NDEVG
+         4         0         1
 END"""
     return body
 
