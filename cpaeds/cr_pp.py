@@ -133,11 +133,14 @@ def main():
                 os.chdir(f"{pdir}/results")
                 output_body = build_output(settings_loaded,fraction_list,dG_list,pka_dG_list,pka_offset_list)
                 write_file2(output_body,'results.out')
-                density_map_to_concat_df( density_map_e1,column_name=['e1'])
-                density_map_to_concat_df( density_map_e2,column_name=['e2'])
-                density_map_to_concat_df( density_map_e1r,column_name=['e1r'])
-                density_map_to_concat_df( density_map_e2r,column_name=['e2r'])
-                density_map_to_concat_df( density_map_emix,column_name=['vmix'])
+                if len(column_name) == 0:
+                        pass
+                else:
+                        density_map_to_concat_df( density_map_e1,column_name=['e1'])
+                        density_map_to_concat_df( density_map_e2,column_name=['e2'])
+                        density_map_to_concat_df( density_map_e1r,column_name=['e1r'])
+                        density_map_to_concat_df( density_map_e2r,column_name=['e2r'])
+                        density_map_to_concat_df( density_map_emix,column_name=['vmix'])
 
                 #fraction_state1,offset = read_output('./results.out')
                 #plot_offset_ratio(offset,fraction_state1,5,settings_loaded)

@@ -128,9 +128,12 @@ def main():
                 plot_offst_dG(offset,dG_list,1,settings_loaded)
                 plot_offset_pH(offset,fraction_state1,settings_loaded)
                 plot_offset_pH_fraction(offset,fraction_state1,settings_loaded)
-                density_plot(density_map_e1,density_map_e2,density_map_emix,column_name)
-                state_density_csv(density_map_e1,density_map_e2,density_map_state,column_name)
-                kde_ridge_plot('e_state.csv','e1')
-                kde_ridge_plot('e_state.csv','e2')
+                if len(column_name) == 0:
+                        pass
+                else:
+                        density_plot(density_map_e1,density_map_e2,density_map_emix,column_name)
+                        state_density_csv(density_map_e1,density_map_e2,density_map_state,column_name)
+                        kde_ridge_plot('e_state.csv','e1')
+                        kde_ridge_plot('e_state.csv','e2')
 if __name__ == "__main__":
         main()
