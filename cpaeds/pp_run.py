@@ -3,8 +3,9 @@ import os
 import sys
 import subprocess
 from cpaeds.utils import (load_config_yaml,get_dir_list,write_file,read_energyfile,read_state_file,read_df,plot_offset_ratio,plot_offst_dG,
-                        check_finished,write_file2,read_output,plot_offset_pH,plot_offset_pH_fraction,density_plot,state_density_csv,kde_ridge_plot)
-from cpaeds.file_factory import build_dfmult_file,build_ene_ana,build_output
+                        check_finished,write_file2,read_output,plot_offset_pH,plot_offset_pH_fraction,density_plot,
+                        state_density_csv,kde_ridge_plot,read_rmsd)
+from cpaeds.file_factory import build_dfmult_file,build_ene_ana,build_output,build_rmsd
 from cpaeds.aeds_sampling import calculate_statesampled,calc_prob_sampling,write_prob_sampling,calc_sampling,write_sampling
 from cpaeds.algorithms import pKa_from_df, natural_keys
 
@@ -42,6 +43,7 @@ def main():
                         pdir_list.sort(key=natural_keys)
         else:
                 pdir_list.append(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}")
+        equilibrate= settings_loaded['simulation']['equilibrate']
         for pdir in pdir_list:
                 os.chdir(f"{pdir}")
                 dir_list = get_dir_list()
@@ -49,6 +51,7 @@ def main():
                 pka_dG_list = [] 
                 pka_offset_list = []
                 dG_list = []
+                rmsd_list = []
                 density_map_e1 = []
                 density_map_e2 = []
                 density_map_emix = []
@@ -60,11 +63,58 @@ def main():
                         else:
                                 os.chdir(f"{pdir}/{dir}")
                                 run_finished, NOMD = check_finished(settings_loaded)
-                                
+                                try:
+                                        os.mkdir('rmsd')
+                                except FileExistsError:
+                                        pass
+                                os.chdir(f"{pdir}/{dir}/rmsd")
+                                if equilibrate[0] == True and run_finished == True:
+                                        print('Running rmsd for finished run...')
+                                        print(f'Discarding {equilibrate[1]}% for equilibration...')
+                                        rmsd_body = build_rmsd(settings_loaded,settings_loaded['simulation']['parameters']['NRUN'])
+                                        write_file2(rmsd_body,'rmsd_eq.arg')
+                                        with open('rmsd.out', 'w') as sp:
+                                                exe = subprocess.run(
+                                                ['rmsd', '@f', 'rmsd_eq.arg'], 
+                                                stdout=sp)
+                                        exe.check_returncode()
+                                        rmsd_list.append(read_rmsd('rmsd.out'))
+                                elif run_finished == True:
+                                        print('Running rmsd for finished run...')
+                                        rmsd_body = build_rmsd(settings_loaded,settings_loaded['simulation']['parameters']['NRUN'])
+                                        write_file(rmsd_body,'rmsd.arg')
+                                        with open('rmsd.out', 'w') as sp:
+                                                exe = subprocess.run(
+                                                ['rmsd', '@f', 'rmsd.arg'], 
+                                                stdout=sp)
+                                        exe.check_returncode()
+                                        rmsd_list.append(read_rmsd('rmsd.out'))
+                                else:
+                                        print('Running rmsd for unfinished run...')
+                                        rmsd_body = build_rmsd(settings_loaded,NOMD)
+                                        write_file2(rmsd_body,'rmsd_temp.arg')
+                                        with open('rmsd.out', 'w') as sp:
+                                                exe = subprocess.run(
+                                                ['rmsd', '@f', 'rmsd_temp.arg'], 
+                                                stdout=sp)
+                                        exe.check_returncode()
+                                        rmsd_list.append(read_rmsd('rmsd.out'))
                                 os.chdir(f"{pdir}/{dir}/ene_ana")
                                 df_file_body = build_dfmult_file(settings_loaded)
                                 write_file(df_file_body,'df.arg')
-                                if run_finished == True:
+                                if equilibrate[0] == True and run_finished == True:
+                                        print('Running ene_ana for finished run...')
+                                        print(f'Discarding {equilibrate[1]}% for equilibration...')
+                                        ene_ana_body =  build_ene_ana(settings_loaded,settings_loaded['simulation']['parameters']['NRUN'])
+                                        write_file2(ene_ana_body,'ene_ana_temp.arg')
+                                        exe = subprocess.run(
+                                        ['ene_ana', '@f', 'ene_ana_temp.arg'],
+                                        check=True,
+                                        capture_output=True,
+                                        text=True
+                                        )
+                                        exe.check_returncode()
+                                elif run_finished == True:
                                         print('Running ene_ana for finished run...')
                                         exe = subprocess.run(
                                         ['ene_ana', '@f', 'ene_ana.arg'],
@@ -77,7 +127,6 @@ def main():
                                         print('Running ene_ana for unfinished run...')
                                         ene_ana_body =  build_ene_ana(settings_loaded,NOMD)
                                         write_file2(ene_ana_body,'ene_ana_temp.arg')
-                                        print('Running ene_ana for unfinished run...')
                                         exe = subprocess.run(
                                         ['ene_ana', '@f', 'ene_ana_temp.arg'],
                                         check=True,
@@ -121,11 +170,11 @@ def main():
                 except FileExistsError:
                         pass
                 os.chdir(f"{pdir}/results")
-                output_body = build_output(settings_loaded,fraction_list,dG_list,pka_dG_list,pka_offset_list)
+                output_body = build_output(settings_loaded,fraction_list,dG_list,rmsd_list)
                 write_file2(output_body,'results.out')
                 fraction_state1,offset = read_output('./results.out')
                 plot_offset_ratio(offset,fraction_state1,5,settings_loaded)
-                plot_offst_dG(offset,dG_list,1,settings_loaded)
+                #plot_offst_dG(offset,dG_list,1,settings_loaded)
                 plot_offset_pH(offset,fraction_state1,settings_loaded)
                 plot_offset_pH_fraction(offset,fraction_state1,settings_loaded)
                 if len(column_name) == 0:

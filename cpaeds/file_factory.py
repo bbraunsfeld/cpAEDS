@@ -156,13 +156,19 @@ END"""
         body += F"""
 INNERLOOP
 #     NTILM      NTILS      NGPUS      NDEVG
-         4         0         1
+         4         0         1         0
 END"""
     return body
 
 def build_ene_ana(settings_loaded,NRUN):
     name = settings_loaded['system']['name']
     topo = settings_loaded['system']['topo_file']
+    equilibrate= settings_loaded['simulation']['equilibrate']
+    if equilibrate[0] == True:
+        start = NRUN*(equilibrate[1]/100)
+        start = round(start)
+    else:
+        start = 1
     NRUN = NRUN + 1
 
     body = f"""@prop eds_vr e1 e2 e1s e2s e1r e2r eds_emin eds_emax eds_vmix eds_globmin eds_globminfluc
@@ -170,8 +176,28 @@ def build_ene_ana(settings_loaded,NRUN):
 @library ene_ana.md++.lib
 @en_files
 """
-    for i in range(1,NRUN,1):
+    for i in range(start,NRUN,1):
             body += f"../aeds_{name}_{i}.tre.gz\n"
+    return body
+
+def build_rmsd(settings_loaded, NRUN):
+    name = settings_loaded['system']['name']
+    topo = settings_loaded['system']['topo_file']
+    equilibrate = settings_loaded['simulation']['equilibrate']
+    if equilibrate[0] == True: 
+        start = NRUN*(equilibrate[1]/100)
+        start = round(start)
+    else:
+        start = 1
+    body = f"""@topo ../../../../topo/{topo}
+@pbc r cog
+@atomsrmsd  1:CA
+@atomsfit   1:CA,C,N
+@traj
+"""
+    
+    body += f"../aeds_{name}_{start}.trc.gz\n"
+    body += f"../aeds_{name}_{NRUN}.trc.gz\n"
     return body
 
 def build_dfmult_file(settings_loaded):
@@ -182,11 +208,11 @@ def build_dfmult_file(settings_loaded):
 @endstates e1.dat e2.dat"""
     return body
 
-def build_output(settings_loaded,fractions,dG,pka_dG,pka_offset):
+def build_output(settings_loaded,fractions,dG,rmsd):
     offsets = settings_loaded['simulation']['parameters']['EIR_list']
     n= len(offsets)
-    body = f"""#RUN,OFFSET,FRACTION1,FRACTION2,dG,pKa_dG,pKa_OFFSET\n"""
+    body = f"""#RUN,OFFSET,FRACTION1,FRACTION2,dG,rmsd\n"""
 
     for i in range(1,n+1,1):
-            body += f"{i},{offsets[i-1]},{fractions[i-1][0]},{fractions[i-1][1]},{dG[i-1]},{pka_dG[i-1]},{pka_offset[i-1]}\n"
+            body += f"{i},{offsets[i-1]},{fractions[i-1][0]},{fractions[i-1][1]},{dG[i-1]},{rmsd[i-1]}\n"
     return body

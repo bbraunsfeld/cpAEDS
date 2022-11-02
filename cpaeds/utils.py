@@ -307,6 +307,17 @@ def read_df(file):
                 df = float(fields[1])
     return df
 
+def read_rmsd(file):
+    one_before_last = None
+    last_line = None
+    with open(file, "r") as inn:
+        for line in inn:
+            one_before_last=last_line
+            last_line = line
+        fields = one_before_last.split()
+        rmsd = float(fields[1])
+    return rmsd
+
 def read_energyfile(efile):
     etraj = []
     ttraj = []
@@ -431,7 +442,7 @@ def plot_offset_pH_fraction(offsets,fractions,settings_loaded):
     plt.title(f"{settings_loaded['system']['name']} with emin: {settings_loaded['simulation']['parameters']['EMIN']}; emax: {settings_loaded['simulation']['parameters']['EMAX']}") 
     plt.savefig(f"offset_pH_fraction.png",bbox_inches='tight')
     plt.close('all')
-gc.collect()
+    gc.collect()
 
 def linear_regression(x,y):
     slope, intercept, r, p, std_err = stats.linregress(x, y)
