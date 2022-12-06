@@ -1,0 +1,32 @@
+---
+################
+system:
+################
+  name: 'example_system'
+  system_dir: '/home/bbraun/cpAEDS/cpaeds/tests/test_data/example_system'
+  md_dir: '/home/bbraun/cpAEDS/cpaeds/tests/test_data/example_system/md_propionic_acid/'
+  output_dir_name: 'example_output'
+  topo_file: '/home/bbraun/cpAEDS/cpaeds/tests/test_data/example_system/topo/propionic_acid_54a8_pH.top'
+  pert_file: '/home/bbraun/cpAEDS/cpaeds/tests/test_data/example_system/topo/pert_eds.ptp'
+  path_to_md_engine: '/pool/ogracia/GROMOS/gromosXX_2021/gromosXX/BUILD_CUDA/bin/md'
+  lib_type: 'cuda'
+  version: 'md++'
+################
+simulation:
+################
+  NSTATS: 1
+  NSTATES: 2
+  cpAEDS_type: 2
+  parameters:
+    NRUN: 5
+    NSTLIM: 1000
+    NTPR: 100
+    NTWX: 1000
+    NTWE: 100
+    dt: 0.002
+    EMIN: -600
+    EMAX: -150
+    EIR_start: -70
+    EIR_range: 40
+    EIR_step_size: 1
+

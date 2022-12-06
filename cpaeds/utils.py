@@ -16,6 +16,10 @@ from scipy.optimize import curve_fit
 import pandas as pd 
 from cpaeds.algorithms import natural_keys, offset_steps, ph_curve
 from cpaeds.file_factory import build_ene_ana
+from cpaeds.context_manager import set_directory
+from cpaeds.logger import LoggerFactory
+
+logger = LoggerFactory.get_logger("system.py", log_level="INFO", file_name = "debug.log")
 
 def load_config_yaml(config) -> dict:
     with open(f"{config}", "r") as stream:
@@ -26,10 +30,6 @@ def load_config_yaml(config) -> dict:
         return settings_loaded
     
 def dumb_full_config_yaml(settings_loaded):
-    try:
-        os.chdir(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}")
-    except OSError:
-        sys.exit("Error changing to output folder directory.")
     with open(f"final_settings.yaml", 'w') as file:
         yaml.dump(settings_loaded, file)
 
@@ -175,6 +175,7 @@ def check_simulation_settings(settings_loaded):
         settings_loaded['simulation']['parameters'].get('EIR_step_size') == None
     ):
         raise KeyError("Parameterset is not complete")
+
 # pp
 def check_finished(settings_loaded):
     omd_list = []
@@ -243,18 +244,18 @@ def copy_lib_file(destination,name):
 def write_file(input_string,name) -> str:
     check_file = Path(f"{os.getcwd()}/{name}")
     if os.path.exists(check_file):
-        print(f"{name} exists in {os.getcwd()}.")
+        logger.info(f"{name} exists in {os.getcwd()}.")
         pass
     else:
         with open(check_file,'w+') as file:
             file.write(input_string)
-        print(f"{name} created in {os.getcwd()}.")
+        logger.info(f"{name} created in {os.getcwd()}.")
 
 def write_file2(input_string,name) -> str:
     check_file = Path(f"{os.getcwd()}/{name}")
     with open(check_file,'w+') as file:
         file.write(input_string)
-    print(f"{name} created in {os.getcwd()}.")
+    logger.info(f"{name} created in {os.getcwd()}.")
 
 def create_ana_dir(settings_loaded):
     try:
@@ -262,11 +263,11 @@ def create_ana_dir(settings_loaded):
     except FileExistsError:
         pass
     parent = os.getcwd()
-    os.chdir(f"{parent}/ene_ana")
-    copy_lib_file(f"{parent}/ene_ana",'ene_ana.md++.lib')
-    ene_ana_body =  build_ene_ana(settings_loaded,settings_loaded['simulation']['parameters']['NRUN'])
-    write_file(ene_ana_body,'ene_ana.arg')
-    os.chdir(f"{parent}")
+    with set_directory(f"{parent}/ene_ana"):
+        copy_lib_file(f"{parent}/ene_ana",'ene_ana.md++.lib')
+        ene_ana_body =  build_ene_ana(settings_loaded,settings_loaded['simulation']['parameters']['NRUN'])
+        write_file(ene_ana_body,'ene_ana.arg')
+
 
 """
 def start_prod_run(settings_loaded,dir):

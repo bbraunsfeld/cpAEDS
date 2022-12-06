@@ -4,10 +4,10 @@ import os
 def build_mk_script_file(settings_loaded,dir_path):
     name = settings_loaded['system']['name']
     md_engine = settings_loaded['system']['path_to_md_engine']
-    topo = settings_loaded['system']['topo_file']
+    topo = os.path.relpath(settings_loaded['system']['topo_file'], dir_path)
     md_dir_name = os.path.basename(os.path.normpath(settings_loaded['system']['md_dir']))
-    cnf = settings_loaded['system']['cnf_file']
-    pert = settings_loaded['system']['pert_file']
+    cnf = os.path.relpath(f"{md_dir_name}/{settings_loaded['system']['cnf_file']}",  dir_path)
+    pert =  os.path.relpath(settings_loaded['system']['pert_file'], dir_path)
     version = settings_loaded['system']['version']
     if settings_loaded['system']['lib_type'] == f"cuda":
         lib = f'mk_script_cuda_8_slurm.lib'
@@ -17,10 +17,10 @@ def build_mk_script_file(settings_loaded,dir_path):
 @bin           {md_engine}
 @dir           {dir_path}
 @files
-  topo          ../../../topo/{topo}
+  topo          {topo}
   input         aeds.imd
   coord        ../../../{md_dir_name}/{cnf}
-  pttopo       ../../../topo/{pert}
+  pttopo       {pert}
 @template       {lib}
 @version        {version}
 @joblist        aeds.job"""

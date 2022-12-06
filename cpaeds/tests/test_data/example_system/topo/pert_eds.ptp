@@ -1,0 +1,19 @@
+TITLE
+prep_eds: EDS perturbation topology using: 
+/pool/bbraun/propionic_acid/topo/propionic_acid_54a8_pH.top
+/pool/bbraun/propionic_acid/topo/propanoate_anion_54a8_pH.top
+
+END
+MPERTATOM
+# NJLA: number of perturbed atoms
+# NPTB: number of states
+    5    2
+# identifiers of the states
+    state0    state1
+#  NR  NAME IAC(1) CHARGE(1) ...  IAC(n) CHARGE(n)  ALPHLJ  ALPHCRF
+    1    C1  12    0.33000  12    0.27000    1.00000    1.00000
+    2	 C2  15    0.00000  15    0.16000    1.00000    1.00000
+    4    OD1  1   -0.45000   2    -0.7150    1.00000    1.00000
+    5    OD2  3   -0.28800   2    -0.7150    1.00000    1.00000
+    6    H1  21    0.40800  22    0.00000    1.00000    1.00000
+END
