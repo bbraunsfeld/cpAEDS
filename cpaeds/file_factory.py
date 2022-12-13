@@ -161,8 +161,9 @@ END"""
     return body
 
 def build_ene_ana(settings_loaded,NRUN):
+    dir_path = os.getcwd()
     name = settings_loaded['system']['name']
-    topo = settings_loaded['system']['topo_file']
+    topo = os.path.relpath(settings_loaded['system']['topo_file'], dir_path)
     equilibrate= settings_loaded['simulation']['equilibrate']
     if equilibrate[0] == True:
         start = NRUN*(equilibrate[1]/100)
@@ -172,7 +173,7 @@ def build_ene_ana(settings_loaded,NRUN):
     NRUN = NRUN + 1
 
     body = f"""@prop eds_vr e1 e2 e1s e2s e1r e2r eds_emin eds_emax eds_vmix eds_globmin eds_globminfluc
-@topo ../../../../topo/{topo}
+@topo {topo}
 @library ene_ana.md++.lib
 @en_files
 """
@@ -181,15 +182,16 @@ def build_ene_ana(settings_loaded,NRUN):
     return body
 
 def build_rmsd(settings_loaded, NRUN):
+    dir_path = os.getcwd()
     name = settings_loaded['system']['name']
-    topo = settings_loaded['system']['topo_file']
+    topo = os.path.relpath(settings_loaded['system']['topo_file'], dir_path)
     equilibrate = settings_loaded['simulation']['equilibrate']
     if equilibrate[0] == True: 
         start = NRUN*(equilibrate[1]/100)
         start = round(start)
     else:
         start = 1
-    body = f"""@topo ../../../../topo/{topo}
+    body = f"""@topo {topo}
 @pbc r cog
 @atomsrmsd  1:CA
 @atomsfit   1:CA,C,N
