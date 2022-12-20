@@ -160,6 +160,18 @@ class SetupSystem(object):
         else:
             self.config['simulation']['NSTATES'] = 2
             logger.info(f"Default run with 2 endstates")
+        if 'EIR_start' in self.config['simulation']['parameters']:
+            if isinstance(self.config['simulation']['parameters']['EIR_start'], list):
+                logger.info(f"Starting offset: {self.config['simulation']['parameters']['EIR_start']}")
+            elif isinstance(self.config['simulation']['parameters']['EIR_start'], float):
+                self.config['simulation']['parameters']['EIR_start'] = list(self.config['simulation']['parameters']['EIR_start'])
+                logger.info(f"Starting offset: {self.config['simulation']['parameters']['EIR_start']}")
+            elif isinstance(self.config['simulation']['parameters']['EIR_start'], int):
+                self.config['simulation']['parameters']['EIR_start'] = list(self.config['simulation']['parameters']['EIR_start'])
+                logger.info(f"Starting offset: {self.config['simulation']['parameters']['EIR_start']}")
+        else:
+            logger.critical(f"No value for EIR_start in input yaml.")
+            sys.exit()
         if 'equilibrate' in self.config['simulation']:
             if int(self.config['simulation']['equilibrate'][0]) == True:
                 logger.info(f"Standard equilibration set to {self.config['simulation']['equilibrate'][1]}")  
@@ -197,13 +209,14 @@ class SetupSystem(object):
         self.__check_simulation_settings()
 
     def __create_offsets(self):
-        offset_list = offset_steps(self.config['simulation']['parameters']['EIR_start'],
+        offsets = offset_steps(self.config['simulation']['parameters']['EIR_start'],
                                     self.config['simulation']['parameters']['EIR_range'],
                                     self.config['simulation']['parameters']['EIR_step_size'],
                                     self.config['simulation']['cpAEDS_type'])
-        self.config['simulation']['parameters']['EIR_list'] = offset_list
-        self.config['simulation']['parameters']['n_runs'] = len(offset_list)
-        logger.info(f"List of offsets {offset_list}.")
+        self.config['simulation']['parameters']['EIR_list'] = offsets
+        self.config['simulation']['parameters']['n_runs'] = len(offsets[0])
+        for i in range(len(offsets)):
+            logger.info(f"List of offsets {offsets[i]} for state {i+1}.")
 
 
     def __create_folders(self):
@@ -241,7 +254,8 @@ class SetupSystem(object):
                         write_file(mk_script_body,'aeds_mk_script.arg')
                         job_file_body = build_job_file(self.config)
                         write_file(job_file_body,'aeds.job')
-                        EIR = self.config['simulation']['parameters']['EIR_list'][eir_counter]
+                        ### parses list of EIRS on same level
+                        EIR = [item[eir_counter] for item in self.config['simulation']['parameters']['EIR_list']]
                         imd_file_body = build_imd_file(self.config,EIR,random_seed) 
                         write_file(imd_file_body,'aeds.imd')
                         create_ana_dir(self.config)

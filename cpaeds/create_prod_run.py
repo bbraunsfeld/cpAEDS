@@ -8,6 +8,7 @@ from cpaeds.utils import (load_config_yaml,check_system_settings,check_system_di
 from cpaeds.file_factory import build_mk_script_file,build_job_file,build_imd_file
 from cpaeds.algorithms import natural_keys
 
+#moved to system.py
 def create_prod_run(settings_loaded):
     create_offsets(settings_loaded)
     create_folders(settings_loaded)

@@ -39,6 +39,7 @@ def read_last_line(f) -> str:
         f.seek(-2, 1)          # ... jump back, over the read byte plus one more.
     return f.read() 
 
+#moved to system.py
 def check_system_settings(settings_loaded):
     mddir_exists = False
     outdir_exists = False
@@ -77,6 +78,7 @@ def check_system_settings(settings_loaded):
             print("No pertubation file (.ptp) argument.")
             sys.exit("Error changing to output folder directory.")
 
+#removed
 def check_system_dir(settings_loaded):
     if settings_loaded['system']['system_dir'] == os.path.dirname(os.path.abspath(__file__)):
         pass
@@ -104,7 +106,7 @@ def get_file_list(file_ext: str):
     file_list.sort(key=natural_keys)
     return file_list
 
-
+#moved to system.py
 def check_dirs(settings_loaded):
     dir_list = get_dir_list()
     if os.path.basename(os.path.normpath(settings_loaded['system']['topo_dir'])) in dir_list:
@@ -126,6 +128,7 @@ def check_dirs(settings_loaded):
         settings_loaded['system']['aeds_dir'] = f"{settings_loaded['system']['system_dir']}/aeds"
         print("AEDS folder created.")
 
+#moved to system.py
 def check_input_files(settings_loaded):
     files = [f for f in os.listdir(settings_loaded['system']['topo_dir']) if os.path.isfile(os.path.join(settings_loaded['system']['topo_dir'], f))]
     if  settings_loaded['system']['topo_file'] in files:
@@ -152,6 +155,7 @@ def check_input_files(settings_loaded):
     settings_loaded['system']['ref_imd'] = f"{imd_list[-1]}" 
     print(f"{settings_loaded['system']['ref_imd']} found.")
 
+#moved to system.py
 def check_simulation_settings(settings_loaded):
     nstats_exists = False
     if settings_loaded['simulation']['NSTATS']:
@@ -206,12 +210,14 @@ def check_job_running(user,dir):
     os.remove('running_jobs.out') 
 
 #### creating folders ####
+#moved to system.py
 def create_offsets(settings_loaded):
     offset_list = offset_steps(settings_loaded['simulation']['parameters']['EIR_start'],
                                 settings_loaded['simulation']['parameters']['EIR_range'],settings_loaded['simulation']['parameters']['EIR_step_size'])
     settings_loaded['simulation']['parameters']['EIR_list'] = offset_list
     settings_loaded['simulation']['parameters']['n_runs'] = len(offset_list)
 
+#moved to system.py
 def create_folders(settings_loaded):
     for i in range(1, settings_loaded['simulation']['NSTATS'] + 1):
         if os.getcwd() == settings_loaded['system']['aeds_dir']:
