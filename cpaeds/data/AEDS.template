@@ -1,0 +1,12 @@
+AEDS
+#     AEDS
+         1
+#   ALPHLJ   ALPHCRF      FORM      NUMSTATES
+    {ALPHLJ} {ALPHCRF}       1      {NSTATES}
+#     EMAX      EMIN
+    {EMAX}    {EMIN}
+# EIR [1..NUMSTATES]
+         0      {EIR}
+# NTIAEDSS  RESTREMIN  BMAXTYPE      BMAX    ASTEPS    BSTEPS
+         1          1         2         2       500     10000
+END

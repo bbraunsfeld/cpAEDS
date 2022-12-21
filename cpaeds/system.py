@@ -3,6 +3,7 @@ import copy
 import os
 import subprocess
 import sys
+from tqdm import tqdm
 # cpaeds modules
 from cpaeds.algorithms import natural_keys, offset_steps
 from cpaeds.logger import LoggerFactory
@@ -133,17 +134,13 @@ class SetupSystem(object):
 
         files = [f for f in os.listdir(self.md_dir) if os.path.isfile(os.path.join(self.md_dir, f))]
         cnf_list=[]
-        imd_list=[]
         for file in files:
             if file.endswith('.cnf'):
                 cnf_list.append(file)
-            if file.endswith('.imd'):
-                imd_list.append(file)
         cnf_list.sort(key=natural_keys)
-        imd_list.sort(key=natural_keys)
         self.config['system']['cnf_file'] = f"{cnf_list[-1]}"
         logger.info(f"{self.config['system']['cnf_file']} found.")
-        self.config['system']['ref_imd'] = f"{imd_list[-1]}" 
+        self.config['system']['ref_imd'] = f"{cnf_list[-1][:-4]}.imd" 
         logger.info(f"{self.config['system']['ref_imd']} found.")
 
     def __check_simulation_settings(self):
@@ -244,7 +241,7 @@ class SetupSystem(object):
             with set_directory(f"{pdir}"):
                 dir_list = get_dir_list()
                 eir_counter = 0
-                for dir in dir_list:
+                for dir in tqdm(dir_list):
                     with set_directory(f"{pdir}/{dir}"):
                         if self.config['system']['lib_type'] == f"cuda":
                             copy_lib_file(os.getcwd(),'mk_script_cuda_8_slurm.lib')

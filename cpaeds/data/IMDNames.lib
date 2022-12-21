@@ -1,0 +1,15 @@
+# EIR (Energy offsets for states) is for the second state. If there were more states, the next EIR should be on the next position, shifting the rest of the indices up (none implemented by now!)
+NSTLIM,STEP,0
+NTWX,WRITETRAJ,0
+NTWE,WRITETRAJ,4
+dt,STEP,2
+ALPHLJ,AEDS,1
+ALPHCRF,AEDS,2
+EMAX,AEDS,5
+EMIN,AEDS,6
+NUMSTATES,AEDS,4
+EIR,AEDS,8
+rnd_seed,INITIALISE,8
+NTPR,PRINTOUT,0
+NTPOR,POSITIONRES,0
+T,STEP,1
