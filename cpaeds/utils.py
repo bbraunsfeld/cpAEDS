@@ -39,52 +39,6 @@ def read_last_line(f) -> str:
         f.seek(-2, 1)          # ... jump back, over the read byte plus one more.
     return f.read() 
 
-#moved to system.py
-def check_system_settings(settings_loaded):
-    mddir_exists = False
-    outdir_exists = False
-    topo_exists = False
-    pert_exists = False
-    if settings_loaded['system']['md_dir']:
-        mddir_exists = True
-        if mddir_exists == True:
-            print(f"MD folder set to {settings_loaded['system']['md_dir']}")
-        else:
-            print("Missing MD folder argument.")
-            sys.exit("Error changing to output folder directory.")
-    if settings_loaded['system']['output_dir_name']:
-        outdir_exists = True
-        if outdir_exists == True:
-            print(f"Output folder name set to {settings_loaded['system']['output_dir_name']}.")
-        else:
-            settings_loaded['system']['output_dir_name'] = 'prod_runs'
-            print(f"Output folder name set to {settings_loaded['system']['output_dir_name']}.")
-    if settings_loaded['system']['topo_file']:
-        topo_exists = True
-        if topo_exists == True:
-            settings_loaded['system']['topo_dir'] = os.path.dirname(settings_loaded['system']['topo_file'])
-            print(f"Topo folder set to {settings_loaded['system']['topo_dir']}.")
-            settings_loaded['system']['topo_file'] = os.path.basename(os.path.normpath(settings_loaded['system']['topo_file']))
-            print(f"Topo file set to {settings_loaded['system']['topo_file']}.")
-        else:
-            print("Missing topo file argument.")
-            sys.exit("Error changing to output folder directory.")
-    if settings_loaded['system']['pert_file']:
-        pert_exists = True
-        if pert_exists == True:
-            settings_loaded['system']['pert_file'] = os.path.basename(os.path.normpath(settings_loaded['system']['pert_file']))
-            print(f"Pertubation file set to {settings_loaded['system']['pert_file']}.")
-        else:
-            print("No pertubation file (.ptp) argument.")
-            sys.exit("Error changing to output folder directory.")
-
-#removed
-def check_system_dir(settings_loaded):
-    if settings_loaded['system']['system_dir'] == os.path.dirname(os.path.abspath(__file__)):
-        pass
-    else:
-        os.chdir(settings_loaded['system']['system_dir'])
-
 def get_dir_list():
     current_path = os.getcwd()
     contents = os.listdir(current_path)
@@ -105,80 +59,6 @@ def get_file_list(file_ext: str):
             file_list.append(file)
     file_list.sort(key=natural_keys)
     return file_list
-
-#moved to system.py
-def check_dirs(settings_loaded):
-    dir_list = get_dir_list()
-    if os.path.basename(os.path.normpath(settings_loaded['system']['topo_dir'])) in dir_list:
-        print("Topo folder found.")
-    else:
-        print("Missing topo folder.")
-    if os.path.basename(os.path.normpath(settings_loaded['system']['md_dir'])) in dir_list:
-        print("MD folder found.")
-    else:
-        print("Missing MD folder.")
-    if 'aeds' in dir_list:
-        settings_loaded['system']['aeds_dir'] = f"{settings_loaded['system']['system_dir']}/aeds"
-        print("AEDS folder already exists.")
-    else:
-        try:
-            os.mkdir('aeds')
-        except FileExistsError:
-            pass
-        settings_loaded['system']['aeds_dir'] = f"{settings_loaded['system']['system_dir']}/aeds"
-        print("AEDS folder created.")
-
-#moved to system.py
-def check_input_files(settings_loaded):
-    files = [f for f in os.listdir(settings_loaded['system']['topo_dir']) if os.path.isfile(os.path.join(settings_loaded['system']['topo_dir'], f))]
-    if  settings_loaded['system']['topo_file'] in files:
-        print(f"{settings_loaded['system']['name']}.top found.")
-    else:
-        print("No topo file exists.")
-    if settings_loaded['system']['pert_file'] in files:
-        print(f"{settings_loaded['system']['pert_file']} found.")
-    else:
-        print("No ptp file exists.")
-
-    files = [f for f in os.listdir(settings_loaded['system']['md_dir']) if os.path.isfile(os.path.join(settings_loaded['system']['md_dir'], f))]
-    cnf_list=[]
-    imd_list=[]
-    for file in files:
-        if file.endswith('.cnf'):
-            cnf_list.append(file)
-        if file.endswith('.imd'):
-            imd_list.append(file)
-    cnf_list.sort(key=natural_keys)
-    imd_list.sort(key=natural_keys)
-    settings_loaded['system']['cnf_file'] = f"{cnf_list[-1]}"
-    print(f"{settings_loaded['system']['cnf_file']} found.")
-    settings_loaded['system']['ref_imd'] = f"{imd_list[-1]}" 
-    print(f"{settings_loaded['system']['ref_imd']} found.")
-
-#moved to system.py
-def check_simulation_settings(settings_loaded):
-    nstats_exists = False
-    if settings_loaded['simulation']['NSTATS']:
-        nstats_exists = True
-        if nstats_exists == True and int(settings_loaded['simulation']['NSTATS']) > 1:
-            print(f"Statistic mode with {settings_loaded['simulation']['NSTATS']} repetitions")  
-        else:
-            settings_loaded['simulation']['NSTATS'] = 1
-            print(f"Single run mode")
-    if  ( 
-        settings_loaded['simulation']['parameters'].get('NRUN') == None or
-        settings_loaded['simulation']['parameters'].get('NSTLIM') == None or 
-        settings_loaded['simulation']['parameters'].get('NTPR') == None or
-        settings_loaded['simulation']['parameters'].get('NTWX') == None or
-        settings_loaded['simulation']['parameters'].get('NTWE') == None or
-        settings_loaded['simulation']['parameters'].get('dt') == None or 
-        settings_loaded['simulation']['parameters'].get('EMIN') == None or
-        settings_loaded['simulation']['parameters'].get('EMAX') == None or
-        settings_loaded['simulation']['parameters'].get('EIR_start') == None or
-        settings_loaded['simulation']['parameters'].get('EIR_range') == None or
-        settings_loaded['simulation']['parameters'].get('EIR_step_size') == None
-    ):
-        raise KeyError("Parameterset is not complete")
 
 # pp
 def check_finished(settings_loaded):
@@ -207,38 +87,7 @@ def check_job_running(user,dir):
         for line in paths:
             if f"{dir} " in line:
                 return True
-    os.remove('running_jobs.out') 
-
-#### creating folders ####
-#moved to system.py
-def create_offsets(settings_loaded):
-    offset_list = offset_steps(settings_loaded['simulation']['parameters']['EIR_start'],
-                                settings_loaded['simulation']['parameters']['EIR_range'],settings_loaded['simulation']['parameters']['EIR_step_size'])
-    settings_loaded['simulation']['parameters']['EIR_list'] = offset_list
-    settings_loaded['simulation']['parameters']['n_runs'] = len(offset_list)
-
-#moved to system.py
-def create_folders(settings_loaded):
-    for i in range(1, settings_loaded['simulation']['NSTATS'] + 1):
-        if os.getcwd() == settings_loaded['system']['aeds_dir']:
-            try:
-                os.makedirs(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}_{i}")
-            except FileExistsError:
-                pass
-            os.chdir(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}_{i}")
-        else:
-            os.chdir(settings_loaded['system']['aeds_dir'])
-            try:
-                os.makedirs(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}_{i}")
-            except FileExistsError:
-                pass
-            os.chdir(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}_{i}")
-
-        for j in range(1,settings_loaded['simulation']['parameters']['n_runs'] + 1):
-            try:
-                os.mkdir(f"{settings_loaded['system']['output_dir_name']}_{i}_{j}")
-            except FileExistsError:
-                pass   
+    os.remove('running_jobs.out')   
 
 def copy_lib_file(destination,name):
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), f"data/{name}"))
