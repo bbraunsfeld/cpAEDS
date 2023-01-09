@@ -208,6 +208,7 @@ def build_imd_file(settings_loaded,EIR,rs):
     EMAX = settings_loaded['simulation']['parameters']['EMAX']
 
     imd = IMDFile(ref_imd_path)
+    settings_loaded['simulation']['parameters']['temp'] = float(imd.blocks['MULTIBATH'][0])
     imd.changeValueByName('NUMSTATES', NUMSTATES)
     imd.changeValueByName('NSTLIM', NSTLIM)
     imd.changeValueByName('NTPR', NTPR)
