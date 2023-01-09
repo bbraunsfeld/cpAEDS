@@ -18,8 +18,6 @@ from cpaeds.algorithms import natural_keys, offset_steps, ph_curve
 from cpaeds.file_factory import build_ene_ana
 from cpaeds.context_manager import set_directory
 from cpaeds.logger import LoggerFactory
-import paramiko
-import getpass
 
 logger = LoggerFactory.get_logger("system.py", log_level="INFO", file_name = "debug.log")
 
@@ -124,45 +122,6 @@ def create_ana_dir(settings_loaded):
         copy_lib_file(f"{parent}/ene_ana",'ene_ana.md++.lib')
         ene_ana_body =  build_ene_ana(settings_loaded,settings_loaded['simulation']['parameters']['NRUN'])
         write_file(ene_ana_body,'ene_ana.arg')
-
-### cluster handling ###
-def run_SSH(path, 
-            command, 
-            host=input("Enter SSH host: "),    
-            username=input("Enter username for ssh connection: "), 
-            password=getpass.getpass("Enter ssh password: ")):
-    """
-    Runs a command on the specified ssh connection
-
-    Returns: (stdout, stderr) as strings
-    Retruns: False if the connection failed.
-
-    path: The path to run the command in
-    command: The command to run
-    host: the hostname/IP of the ssh host
-    username: username for the host
-    password: password for the host
-    """
-
-    ssh_client = paramiko.SSHClient()
-    ssh_client.load_system_host_keys()
-    ssh_client.set_missing_host_key_policy(paramiko.RejectPolicy()) # Don't connect to unknown hosts
-
-    try:
-        ssh_client.connect(hostname=host, username=username, password=password)
-    except Exception as e:
-        print(f"Could not connect to host: {e}")
-        return False
-
-    stdin, stdout, stderr = ssh_client.exec_command(f"cd {path}; {command}")
-
-    stdout_str = stdout.read()
-    stderr_str = stderr.read()
-
-    stdin.close()
-    ssh_client.close()
-
-    return (stdout_str, stderr_str)
 
 #### analysis ####
 def read_df(file):
