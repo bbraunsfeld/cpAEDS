@@ -23,44 +23,6 @@ import getpass
 
 logger = LoggerFactory.get_logger("system.py", log_level="INFO", file_name = "debug.log")
 
-def run_SSH(path, 
-            command, 
-            host=input("Enter SSH host: "),    
-            username=input("Enter username for ssh connection: "), 
-            password=getpass.getpass("Enter ssh password: ")):
-    """
-    Runs a command on the specified ssh connection
-
-    Returns: (stdout, stderr) as strings
-    Retruns: False if the connection failed.
-
-    path: The path to run the command in
-    command: The command to run
-    host: the hostname/IP of the ssh host
-    username: username for the host
-    password: password for the host
-    """
-
-    ssh_client = paramiko.SSHClient()
-    ssh_client.load_system_host_keys()
-    ssh_client.set_missing_host_key_policy(paramiko.RejectPolicy()) # Don't connect to unknown hosts
-
-    try:
-        ssh_client.connect(hostname=host, username=username, password=password)
-    except Exception as e:
-        print(f"Could not connect to host: {e}")
-        return False
-
-    stdin, stdout, stderr = ssh_client.exec_command(f"cd {path}; {command}")
-
-    stdout_str = stdout.read()
-    stderr_str = stderr.read()
-
-    stdin.close()
-    ssh_client.close()
-
-    return (stdout_str, stderr_str)
-
 def load_config_yaml(config) -> dict:
     with open(f"{config}", "r") as stream:
         try:
@@ -100,7 +62,7 @@ def get_file_list(file_ext: str):
     file_list.sort(key=natural_keys)
     return file_list
 
-# pp
+### pp ###
 def check_finished(settings_loaded):
     omd_list = []
     run_complete = False
@@ -163,36 +125,45 @@ def create_ana_dir(settings_loaded):
         ene_ana_body =  build_ene_ana(settings_loaded,settings_loaded['simulation']['parameters']['NRUN'])
         write_file(ene_ana_body,'ene_ana.arg')
 
+### cluster handling ###
+def run_SSH(path, 
+            command, 
+            host=input("Enter SSH host: "),    
+            username=input("Enter username for ssh connection: "), 
+            password=getpass.getpass("Enter ssh password: ")):
+    """
+    Runs a command on the specified ssh connection
 
-"""
-def start_prod_run(settings_loaded,dir):
-    args = ['ssh', 'pluto']
-    path_to_sh = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data/run.sh'))
-    proc = subprocess.Popen(args, 
-                        stdin=subprocess.PIPE, 
-                        stdout=subprocess.PIPE, 
-                        stderr=subprocess.PIPE)
-    proc.stdin.flush()
-    stdout, stderr = proc.communicate()
+    Returns: (stdout, stderr) as strings
+    Retruns: False if the connection failed.
 
-    os.chdir(f"{settings_loaded['system']['aeds_dir']}/{settings_loaded['system']['output_dir_name']}/{dir}")
+    path: The path to run the command in
+    command: The command to run
+    host: the hostname/IP of the ssh host
+    username: username for the host
+    password: password for the host
+    """
 
-    print (os.getcwd())
-    path = os.getcwd()
-    files = [f for f in os.listdir(f"{path}") if os.path.isfile(os.path.join(f"{path}", f))]
-    run_list=[]
-    for file in files:
-        if file.endswith('.run'):
-            run_list.append(file)
-    run_list.sort(key=natural_keys)
-    exe = subprocess.run(
-        ['bash', path_to_sh, str(run_list[0])],
-        check=True,
-        capture_output=True,
-        text=True,
-        )
-    exe.check_returncode()
-"""
+    ssh_client = paramiko.SSHClient()
+    ssh_client.load_system_host_keys()
+    ssh_client.set_missing_host_key_policy(paramiko.RejectPolicy()) # Don't connect to unknown hosts
+
+    try:
+        ssh_client.connect(hostname=host, username=username, password=password)
+    except Exception as e:
+        print(f"Could not connect to host: {e}")
+        return False
+
+    stdin, stdout, stderr = ssh_client.exec_command(f"cd {path}; {command}")
+
+    stdout_str = stdout.read()
+    stderr_str = stderr.read()
+
+    stdin.close()
+    ssh_client.close()
+
+    return (stdout_str, stderr_str)
+
 #### analysis ####
 def read_df(file):
     df = 'NaN'
