@@ -181,6 +181,11 @@ class SetupSystem(object):
         else:
             self.config['simulation']['cpAEDS_type'] = 1
             logger.info(f"No cpAEDS_type found. Default set to 1")
+        if 'temp' in self.config['simulation']['parameters']:
+            pass
+        else:
+            self.config['simulation']['parameters']['temp'] = 300
+            logger.info(f"Setting simulation temperature to 300 K")
         if  ( 
             self.config['simulation']['parameters'].get('NRUN') == None or
             self.config['simulation']['parameters'].get('NSTLIM') == None or 
