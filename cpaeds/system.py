@@ -272,10 +272,10 @@ class SetupSystem(object):
                             exe.check_returncode()
                             logger.info(f'Finished running mk_script.')   
                         eir_counter += 1
-                    settings_updated = copy.deepcopy(self.config)
-                    settings_updated['system']['output_dir_name']=f"{self.output_dir}_{random_seed}"
-                    dumb_full_config_yaml(settings_updated)
-                    random_seed += 1
+                settings_updated = copy.deepcopy(self.config)
+                settings_updated['system']['output_dir_name']=f"{self.output_dir}_{random_seed}"
+                dumb_full_config_yaml(settings_updated)
+                random_seed += 1
 
     def create_prod_run(self):
         self.__create_offsets()
