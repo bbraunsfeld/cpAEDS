@@ -216,7 +216,7 @@ def build_imd_file(settings_loaded,EIR,rs):
     imd.changeValueByName('dt', dt)
     imd.changeValueByName('EMIN', EMIN)
     imd.changeValueByName('EMAX', EMAX)
-    imd.changeValueByName('EIR', '\t'.join(EIR) if type(EIR) == type(list()) else EIR)
+    imd.changeValueByName('EIR', '\t'.join(str(i) for i in EIR)) #loops over elements in EIR (list of offsets at the same level) 
     imd.changeValueByName('T', 0)
 
     if settings_loaded['system']['lib_type'] == f"cuda":

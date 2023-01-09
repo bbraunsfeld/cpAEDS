@@ -161,10 +161,10 @@ class SetupSystem(object):
             if isinstance(self.config['simulation']['parameters']['EIR_start'], list):
                 logger.info(f"Starting offset: {self.config['simulation']['parameters']['EIR_start']}")
             elif isinstance(self.config['simulation']['parameters']['EIR_start'], float):
-                self.config['simulation']['parameters']['EIR_start'] = list(self.config['simulation']['parameters']['EIR_start'])
+                self.config['simulation']['parameters']['EIR_start'] = [self.config['simulation']['parameters']['EIR_start']]
                 logger.info(f"Starting offset: {self.config['simulation']['parameters']['EIR_start']}")
             elif isinstance(self.config['simulation']['parameters']['EIR_start'], int):
-                self.config['simulation']['parameters']['EIR_start'] = list(self.config['simulation']['parameters']['EIR_start'])
+                self.config['simulation']['parameters']['EIR_start'] = [self.config['simulation']['parameters']['EIR_start']]
                 logger.info(f"Starting offset: {self.config['simulation']['parameters']['EIR_start']}")
         else:
             logger.critical(f"No value for EIR_start in input yaml.")
@@ -253,6 +253,7 @@ class SetupSystem(object):
                         write_file(job_file_body,'aeds.job')
                         ### parses list of EIRS on same level
                         EIR = [item[eir_counter] for item in self.config['simulation']['parameters']['EIR_list']]
+                        logger.info(f"EIR parsed to build_imd {EIR}.")
                         imd_file_body = build_imd_file(self.config,EIR,random_seed) 
                         write_file(imd_file_body,'aeds.imd')
                         create_ana_dir(self.config)
