@@ -73,7 +73,7 @@ def check_finished(settings_loaded):
 
     return run_complete, len(omd_list)
 
-def check_job_running(user,dir):
+def check_job_running(user,status,run,dir):
     with open('running_jobs.out', 'w+') as outfile:
         exe = subprocess.run(
                 ['squeue', '-u', user],
@@ -86,6 +86,8 @@ def check_job_running(user,dir):
     with open('running_jobs.out', 'r') as paths:
         for line in paths:
             if f"{dir} " in line:
+                line = line.split()
+                status[f"run_{run+1}"] = line
                 return True
     os.remove('running_jobs.out')   
 
