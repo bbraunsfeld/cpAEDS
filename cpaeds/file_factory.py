@@ -283,7 +283,8 @@ def build_dfmult_file(settings_loaded):
     return body
 
 def build_output(settings_loaded,fractions,dG,rmsd):
-    offsets = settings_loaded['simulation']['parameters']['EIR_list']
+    #temporary fix to select first in offset list. Needs changes for multi state cpAEDS
+    offsets = settings_loaded['simulation']['parameters']['EIR_list'][0]
     n= len(offsets)
     body = f"""#RUN,OFFSET,FRACTION1,FRACTION2,dG,rmsd\n"""
 

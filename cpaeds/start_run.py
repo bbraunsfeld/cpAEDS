@@ -41,7 +41,8 @@ def initialise():
                                     status[f"run_{i+1}"][5]="ERR"
                 if len(omd_list) == settings_loaded['simulation']['parameters']['NRUN']:
                     status[f"run_{i+1}"][5]="FIN"
-                """else:
+                else:
+                    print("reached submit")
                     run_list.sort(key=natural_keys)
                     exe = subprocess.run(
                         ['bash', path_to_sh, str(run_list[len(omd_list)])],
@@ -49,7 +50,7 @@ def initialise():
                         capture_output=True,
                         text=True,
                     )
-                    exe.check_returncode()"""
+                    exe.check_returncode()
     with open(f"status.yaml", 'w+') as file:
         yaml.dump(status, file)
 

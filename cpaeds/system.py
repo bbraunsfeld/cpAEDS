@@ -14,6 +14,8 @@ from cpaeds.file_factory import build_mk_script_file,build_job_file,build_imd_fi
 # setting logger name and log level
 logger = LoggerFactory.get_logger("system.py", log_level="INFO", file_name = "debug.log")
 
+### TO DO
+# throws wrong critical for missing md file
 class SetupSystem(object):
     def __init__(self, settings: dict):
         """
