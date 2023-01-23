@@ -40,7 +40,10 @@ def initialise():
                                 elif "ERROR" in line:
                                     status[f"run_{i+1}"][5]="ERR"
                 if len(omd_list) == settings_loaded['simulation']['parameters']['NRUN']:
-                    status[f"run_{i+1}"][5]="FIN"
+                    if f"run_{i+1}" in status:
+                        status[f"run_{i+1}"][5]="FIN"
+                    else:
+                         status[f"run_{i+1}"]="FIN"
                 else:
                     print("reached submit")
                     run_list.sort(key=natural_keys)

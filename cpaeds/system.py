@@ -263,6 +263,7 @@ class SetupSystem(object):
                         logger.info(f"EIR parsed to build_imd {EIR}.")
                         imd_file_body = build_imd_file(self.config,EIR,random_seed) 
                         write_file(imd_file_body,'aeds.imd')
+                        #move this to postprocessing
                         create_ana_dir(self.config)
 
                         if os.path.exists(f"{pdir}/{dir}/aeds_{self.config['system']['name']}_1.imd"):
