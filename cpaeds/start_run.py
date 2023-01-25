@@ -1,11 +1,41 @@
-import glob
 import os
 import subprocess
 import yaml
 from cpaeds.algorithms import natural_keys
 from cpaeds.context_manager import set_directory
-from cpaeds.utils import get_dir_list, load_config_yaml, check_job_running,dumb_full_config_yaml
+from cpaeds.utils import get_dir_list, load_config_yaml
+from cpaeds.ssh_connection import SSHConnection
 
+
+
+def check_job_running(user,status,run,dir):
+    """_summary_
+
+    Args:
+        user (String): Name of the user
+        status (dict): Status of all runs 
+        run (Int): Number of run 
+        dir (String): Target directory
+
+    Returns:
+        dict: creates or updates status.yaml
+    """
+    with open('running_jobs.out', 'w+') as outfile:
+        exe = subprocess.run(
+                ['squeue', '-u', user],
+                check=True,
+                stdout=outfile,
+                capture_output= False,
+                text=True,
+            )
+    exe.check_returncode()
+    with open('running_jobs.out', 'r') as paths:
+        for line in paths:
+            if f"{dir} " in line:
+                line = line.split()
+                status[f"run_{run+1}"] = line
+                return True
+    os.remove('running_jobs.out')  
 
 def initialise():
     settings_loaded = load_config_yaml(
@@ -57,16 +87,5 @@ def initialise():
     with open(f"status.yaml", 'w+') as file:
         yaml.dump(status, file)
 
-                
-def first_submit():
-    path_to_sh = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data/run.sh'))
-    for runfile in glob.glob(f"./*/*_1.run"):
-        exe = subprocess.run(
-            ['bash', path_to_sh, runfile],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        exe.check_returncode()
         
     
