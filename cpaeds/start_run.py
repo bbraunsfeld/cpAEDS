@@ -1,3 +1,4 @@
+import glob
 import os
 import subprocess
 import yaml
@@ -5,8 +6,6 @@ from cpaeds.algorithms import natural_keys
 from cpaeds.context_manager import set_directory
 from cpaeds.utils import get_dir_list, load_config_yaml
 from cpaeds.ssh_connection import SSHConnection
-
-
 
 def check_job_running(user,status,run,dir):
     """_summary_
@@ -87,5 +86,22 @@ def initialise():
     with open(f"status.yaml", 'w+') as file:
         yaml.dump(status, file)
 
-        
+def sumbit_jobs_ssh(ssh_connection=None):
+    """
+    Submits all _1.run jobs to the queue using a provided ssh connection. If no connection is given, it will be created upon runtime.
+
+    connection: SSHConnection object
+
+    returns: SSHConnection object
+    """
+    if ssh_connection == None:
+        ssh_connection = SSHConnection()
     
+    run_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data/run.sh'))
+    run_path = os.path.abspath(".")
+
+    for runfile in glob.glob("./*/*_1.run"):
+        stdout, stderr = ssh_connection.exec_command(command=f"bash {run_script} {runfile}", path=run_path)
+        print(stdout, stderr)  
+
+    return ssh_connection  

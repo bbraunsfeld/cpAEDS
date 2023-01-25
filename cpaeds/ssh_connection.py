@@ -6,7 +6,7 @@ Implements a class to handle a ssh connection build upon paramiko
 """
 
 class SSHConnection():
-    def __init__(self, host=None, user=None, password=None) -> None:
+    def __init__(self, host=None, user=None, password=None, encoding="UTF-8") -> None:
         """
         If fields are left empty, the user is prompted on runtime.
 
@@ -20,6 +20,8 @@ class SSHConnection():
         server.exec_command("echo 'hi'", path="/home/myuser/greetings/")
         server.closeSession()
         """
+        self.encoding = encoding
+
         if host == None:
             self.host = input("Enter SSH host: ")
         else:
@@ -63,8 +65,8 @@ class SSHConnection():
         """
         stdin, stdout, stderr = self.ssh_client.exec_command(f"cd {path}; {command}")
 
-        stdout_str = stdout.read()
-        stderr_str = stderr.read()
+        stdout_str = stdout.read().decode(self.encoding)
+        stderr_str = stderr.read().decode(self.encoding)
 
         stdin.close()
 
