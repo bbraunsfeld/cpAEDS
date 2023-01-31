@@ -1,6 +1,7 @@
 import re
 import math
 import numpy as np
+from scipy.optimize import curve_fit
 
 def atoi(text):
     return int(text) if text.isdigit() else text
@@ -72,3 +73,14 @@ def logistic_curve(x, a, b, c, d):
     d is the x value of the sigmoid's midpoint
     """
     return ((a-b) / (1 + np.exp(-c * (x - d)))) + b
+
+def log_fit(x, y):
+    """
+    Tries to fit a given dataset to the logisitc_curve function
+    returns the optimized parameters of the fit.
+    """
+
+    initial_guess = [np.max(y), np.min(y), 1, np.median(y)]
+    popt, pcov = curve_fit(logistic_curve, x, y, p0=initial_guess, method="dogbox") 
+
+    return popt
