@@ -56,12 +56,11 @@ def ph_curve(pka,fraction):
     """
     ph_list = []
     for i in fraction:
-        if i == 1:
-            i = 0.9999999999
-        elif i == 0:
-            i = 0.00000001
-        ph = pka - np.log10(i/(1-i))
-        ph_list.append(ph)
+        if i == 1 or i == 0:
+            ph_list.append(np.NaN)
+        else:
+            ph = pka - np.log10(i/(1-i))
+            ph_list.append(ph)
     return ph_list
 
 def logistic_curve(x, a, b, c, d):
