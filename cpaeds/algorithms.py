@@ -77,9 +77,17 @@ def log_fit(x, y):
     """
     Tries to fit a given dataset to the logisitc_curve function
     returns the optimized parameters of the fit.
+    Does not work if there are NaNs in the x values.
     """
 
-    initial_guess = [np.max(y), np.min(y), 1, np.median(y)]
-    popt, pcov = curve_fit(logistic_curve, x, y, p0=initial_guess, method="dogbox") 
+    # Data cleanup, because curve_fit does not play well with NaNs.
+    x = np.array(x)
+    y = np.array(y)
+    nans = np.isnan(y)
+    x = x[~nans]
+    y = y[~nans]
+
+    initial_guess = [np.max(y), np.min(y), 1, np.median(x)]
+    popt, pcov = curve_fit(logistic_curve, x, y, p0=initial_guess, method='dogbox') 
 
     return popt
