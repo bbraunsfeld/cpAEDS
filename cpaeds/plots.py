@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import yaml
-from cpaeds.algorithms import ph_curve, log_fit, logistic_curve
+from cpaeds.algorithms import ph_curve, log_fit, logistic_curve, inverse_log_curve
 from scipy.stats import linregress
 
 class Plot():
@@ -56,7 +56,7 @@ class StdPlot(Plot):
             for y in ys:
                 ax.scatter(x, ys[y], label=y)        
         else:
-            ax.scatter(x,ys['FRACTION1'].values, label='FRACION1')
+            ax.scatter(x,ys['FRACTION1'].values, label='FRACTION1')
 
         ax.legend()
         ax.set_ylabel(f"Fraction of time")
@@ -102,6 +102,7 @@ class StdPlot(Plot):
         ax.scatter(x, pH)
         ax.set_ylabel("theoretical pH")
         ax.set_xlabel("Offset [kJ/mol]")
+        ax.axhline(self.pka, color="gray", linewidth=0.5)
 
         if standalone:
             ax.plot()
@@ -109,14 +110,59 @@ class StdPlot(Plot):
 
         gc.collect() 
 
-    def offset_pH_fraction(self, state: int = -1):
+    def offset_pH_fraction(self, state: int = -1, ax = None, linfit_subset: list = [0,-1], fit = 'log'):
         """
         Generates a plot with the offset on the lower x-axis, the computed correspondign pH on the upper x-axis and the fraction of states on the y-axis.
 
         Args:
             state (int, optional): index of state of the fully deprotonated form. Defaults to -1.
+            fit (str, optional): either 'log' for logistic fit or 'lin' for linear fit
         """
-        pass
+        df = self.data['results'][0]
+        offset = df['OFFSET']
+        fractions = df.loc[:, df.columns.str.startswith('FRACTION')].iloc[:,state]
+        x = offset
+        
+        pH = ph_curve(self.pka, fractions)
+
+        # Fitting to the data
+        if fit == 'lin':
+            x_subset = x[linfit_subset[0]:linfit_subset[1]]
+            pH_subset = pH[linfit_subset[0]:linfit_subset[1]]
+            self.linfit = linregress(x_subset, pH_subset) 
+            offsetToPH = lambda x: self.linfit.intercept + self.linfit.slope * x
+            pHToOffset = lambda x: (x - self.linfit.intercept) / self.linfit.slope
+            secondary_label = "pH (linear fit)"
+        elif fit == 'log':
+            # Logfit
+            self.logfit = log_fit(x, pH)
+            offsetToPH = lambda x: logistic_curve(x, *self.logfit)
+            pHToOffset = lambda x: inverse_log_curve(x, *self.logfit)
+            secondary_label = "pH (logistic fit)"
+        else:
+            raise SyntaxError
+
+        standalone = False
+        if ax == None:
+            standalone = True # Flag which indicates if the plot is passed to an ax object or not.
+            fig, ax = plt.subplots(1,1, dpi=200)
+
+        #plotpoints = np.linspace(x.min(), x.max())
+        #ax.plot(plotpoints, logistic_curve(plotpoints, *self.logfit))
+        #ax.plot(x, self.linfit.intercept + x * self.linfit.slope)
+        ax.scatter(x, fractions)
+        ax.set_ylabel("fraction of time")
+        ax.set_xlabel("Offset [kJ/mol]")
+        secxax = ax.secondary_xaxis('top', functions=(offsetToPH, pHToOffset))
+        secxax.set_xlabel(secondary_label)
+
+        if standalone:
+            ax.plot()
+            plt.savefig("offset_pH_fraction.png")
+
+        gc.collect() 
+
+
 
     def kde_vmix(self):
         pass

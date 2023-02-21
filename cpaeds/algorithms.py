@@ -73,6 +73,23 @@ def logistic_curve(x, a, b, c, d):
     """
     return ((a-b) / (1 + np.exp(-c * (x - d)))) + b
 
+def inverse_log_curve(y, a, b, c, d):
+    """
+    Computes the inverse of the logisitic function
+
+    Args:
+        x (_type_): _description_
+        a (_type_): _description_
+        b (_type_): _description_
+        c (_type_): _description_
+        d (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+
+    return - (np.log((a-b)/(y-b) -1))/c + d
+
 def log_fit(x, y):
     """
     Tries to fit a given dataset to the logisitc_curve function
