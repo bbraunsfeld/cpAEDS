@@ -147,9 +147,6 @@ class StdPlot(Plot):
             standalone = True # Flag which indicates if the plot is passed to an ax object or not.
             fig, ax = plt.subplots(1,1, dpi=200)
 
-        #plotpoints = np.linspace(x.min(), x.max())
-        #ax.plot(plotpoints, logistic_curve(plotpoints, *self.logfit))
-        #ax.plot(x, self.linfit.intercept + x * self.linfit.slope)
         ax.scatter(x, fractions)
         ax.set_ylabel("fraction of time")
         ax.set_xlabel("Offset [kJ/mol]")
@@ -162,6 +159,57 @@ class StdPlot(Plot):
 
         gc.collect() 
 
+    def fit_residuals(self, state=-1, ax = None, linfit_subset: list = [0,-1], fit = 'log'):
+        """
+        Plots a residual plot for the selected fit
+
+        Args:
+            state (int, optional): Index of the reference state. Defaults to -1.
+            ax (_type_, optional): matplotlib ax object. Defaults to None.
+            linfit_subset (list, optional): Subset data for linear fit. Has no effect if the fit type is set to 'log'. Defaults to [0,-1].
+            fit (str, optional): Type of fit, either 'log' or 'lin'. Defaults to 'log'.
+        """
+        df = self.data['results'][0]
+        x = df['OFFSET']
+        fractions = df.loc[:, df.columns.str.startswith('FRACTION')].iloc[:,state]
+ 
+        pH = ph_curve(self.pka, fractions)
+
+        # Fitting to the data
+        if fit == 'lin':
+            x_subset = x[linfit_subset[0]:linfit_subset[1]]
+            pH_subset = pH[linfit_subset[0]:linfit_subset[1]]
+            self.linfit = linregress(x_subset, pH_subset)
+            offsetToPH = lambda x: self.linfit.intercept + self.linfit.slope * x
+            label = "Residuals linear fit"
+        elif fit == 'log':
+            # Logfit
+            self.logfit = log_fit(x, pH)
+            offsetToPH = lambda x: logistic_curve(x, *self.logfit)
+            label = "Residuals logisitc fit"
+        else:
+            raise SyntaxError
+
+        standalone = False
+        if ax == None:
+            standalone = True # Flag which indicates if the plot is passed to an ax object or not.
+            fig, ax = plt.subplots(1,1, dpi=200)
+
+        residuals = pH - offsetToPH(x)
+
+        ax.scatter(x, residuals)
+        ax.set_title(label)
+        ax.set_xlabel('Offset [kJ/mol]')
+        ax.set_ylabel('Residuals')
+
+        ax.set_ylim(1.1*max(abs(residuals)), - 1.1*max(abs(residuals)))
+        ax.axhline(0, color="gray", linewidth=0.5)
+
+        if standalone:
+            ax.plot()
+            plt.savefig("residuals.png")
+
+        gc.collect() 
 
 
     def kde_vmix(self):
