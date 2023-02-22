@@ -1,3 +1,4 @@
+import seaborn as sns
 import gc
 import pandas as pd
 import numpy as np
@@ -202,7 +203,7 @@ class StdPlot(Plot):
         ax.set_xlabel('Offset [kJ/mol]')
         ax.set_ylabel('Residuals')
 
-        ax.set_ylim(1.1*max(abs(residuals)), - 1.1*max(abs(residuals)))
+        ax.set_ylim(-1.1*max(abs(residuals)), 1.1*max(abs(residuals)))
         ax.axhline(0, color="gray", linewidth=0.5)
 
         if standalone:
@@ -212,8 +213,17 @@ class StdPlot(Plot):
         gc.collect() 
 
 
-    def kde_vmix(self):
-        pass
+    def kde_vmix(self, ax= None):
+        df = self.data['vmix'][0]
+        df = df.set_index(df.columns[0])
+
+        kdeplot = sns.kdeplot(df, fill=False, ax=ax)
+        fig = kdeplot.get_figure()
+
+        if ax == None:
+            fig.savefig("kde_vmix.png")
+
+        gc.collect()
 
     def kde_e(self, state):
         pass
