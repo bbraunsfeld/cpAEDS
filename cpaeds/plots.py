@@ -49,7 +49,7 @@ class StdPlot(Plot):
         ys = df.loc[:, df.columns.str.startswith('FRACTION')]
 
         standalone = False
-        if ax == None:
+        if ax is None:
             standalone = True # Flag which indicates if the plot is passed to an ax object or not.
             fig, ax = plt.subplots(1,1, dpi=200)
 
@@ -93,7 +93,7 @@ class StdPlot(Plot):
         self.logfit = log_fit(x, pH)
 
         standalone = False
-        if ax == None:
+        if ax is None:
             standalone = True # Flag which indicates if the plot is passed to an ax object or not.
             fig, ax = plt.subplots(1,1, dpi=200)
 
@@ -144,7 +144,7 @@ class StdPlot(Plot):
             raise SyntaxError
 
         standalone = False
-        if ax == None:
+        if ax is None:
             standalone = True # Flag which indicates if the plot is passed to an ax object or not.
             fig, ax = plt.subplots(1,1, dpi=200)
 
@@ -192,7 +192,7 @@ class StdPlot(Plot):
             raise SyntaxError
 
         standalone = False
-        if ax == None:
+        if ax is None:
             standalone = True # Flag which indicates if the plot is passed to an ax object or not.
             fig, ax = plt.subplots(1,1, dpi=200)
 
@@ -220,13 +220,76 @@ class StdPlot(Plot):
         kdeplot = sns.kdeplot(df, fill=False, ax=ax)
         fig = kdeplot.get_figure()
 
-        if ax == None:
+        if ax is None:
             fig.savefig("kde_vmix.png")
 
         gc.collect()
 
-    def kde_e(self, state):
-        pass
+    def kde_e(self, axes: list = None, which: list = None):
+        """
+        Generates kde plots for different states.
 
-    def kde_e_to_e(self, states):
-        pass
+        Args:
+            axes (list, optional): List of axes to plot on. Default generates a new plot for each state.
+            which (list, optional): e_1 corresponds to index 0! List of states to plot. Needs to be the same length as axes. Default plots all states.
+
+        Raises:
+            ValueError: axes and which need to be the same length.
+        """
+        if  axes is not None and which is not None:
+            # Raise value error if length of which and axes is not the same and neither of them is None
+            if not len(axes) == len(which):
+                raise ValueError
+
+        if which is None:
+            dfs = self.data['energies']
+            which = range(0, len(self.data['energies']))
+        else:
+            dfs = [self.data['energies'][n] for n in which]
+
+        standalone = False
+        if axes is None:
+            axes = [None for n in dfs]
+            standalone = True
+
+        for n, df, ax in zip(which, dfs, axes):
+            df = df.set_index(df.columns[0])
+            kdeplot = sns.kdeplot(df, ax=ax)
+            fig = kdeplot.get_figure()
+            kdeplot.set(title=f"e_{n+1}")
+
+            if standalone:
+                fig.savefig(f"e_{n+1}.png")
+
+        gc.collect()
+
+
+    def kde_ees(self, which: list = None, ax = None):
+        """
+        Generates kernel density estimate plots for the given energies and plots them onto a single plot.
+
+        Args:
+            which (list, optional): Which energies to plot - 0 based list. Default plots all energies.
+            ax (_type_, optional): Ax object onto which to plot the kde. Default generates a new figure and saved it to a file in the cwd.
+        """
+
+        dfs = self.data['energies']
+
+        if which is None:
+            which = range(0, len(dfs))
+
+        dfs = [dfs[n].set_index(dfs[n].columns[0]) for n in which]
+
+        standalone = False
+        if ax is None:
+            standalone = True
+
+        for df in dfs:
+            kdeplot = sns.kdeplot(df, ax=ax)
+        kdeplot.set(title=f"e_{'_'.join([str(e+1) for e in which])}")
+
+        if standalone:
+            fig = kdeplot.get_figure()
+            fig.savefig(f"e_{'_'.join([str(e+1) for e in which])}.png")
+        
+        gc.collect()
