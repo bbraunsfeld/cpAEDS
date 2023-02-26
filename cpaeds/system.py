@@ -7,7 +7,7 @@ from tqdm import tqdm
 # cpaeds modules
 from cpaeds.algorithms import natural_keys, offset_steps
 from cpaeds.logger import LoggerFactory
-from cpaeds.utils import get_dir_list, copy_lib_file, write_file, create_ana_dir, dumb_full_config_yaml
+from cpaeds.utils import get_dir_list, copy_lib_file, write_file, dumb_full_config_yaml
 from cpaeds.context_manager import set_directory
 from cpaeds.file_factory import build_mk_script_file,build_job_file,build_imd_file
 
@@ -263,8 +263,6 @@ class SetupSystem(object):
                         logger.info(f"EIR parsed to build_imd {EIR}.")
                         imd_file_body = build_imd_file(self.config,EIR,random_seed) 
                         write_file(imd_file_body,'aeds.imd')
-                        #move this to postprocessing
-                        create_ana_dir(self.config)
 
                         if os.path.exists(f"{pdir}/{dir}/aeds_{self.config['system']['name']}_1.imd"):
                             logger.info(f"imd and run files exist")
