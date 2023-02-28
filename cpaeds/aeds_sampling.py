@@ -1,9 +1,7 @@
 import numpy as np
 import glob
-import argparse
 import statsmodels.api as sm
-from cpaeds.utils import read_energyfile
-from cpaeds import postprocessing
+
 #from statsmodels.graphics import tsaplots
 #import matplotlib.pyplot as plt
 #------------------------------
@@ -154,13 +152,16 @@ def write_prob_sampling(prob_outfile, prob_state, itime, step):
 
 ######## New sampling based on contribution to free energy #######
 
-class sampling(postprocessing.postprocessing):
-    def __init__(self, offsets, dfs):
+class sampling():
+    def __init__(self, config, offsets, dfs):
         self.boltzman = 0.00831441
-        self.OFFSETS = offsets
+        self.OFFSETS = [0] + offsets
         self.FREE = dfs
+        print(self.FREE)
+        self.config = config
+        self.temp = self.config['simulation']['parameters']['temp']
         self.REFERENCE = "eds_vr.dat"
-        super(sampling, self).__init__()
+        self.VMIX = "eds_vmix.dat"
         self.BETA = 1.0/(self.temp * self.boltzman)
 
     @staticmethod
@@ -179,10 +180,11 @@ class sampling(postprocessing.postprocessing):
         #read files
         endstates_files = glob.glob("e*[0-9].dat")
         endstates_files = sorted(endstates_files, key=lambda x: int(x.split(".")[0][1:]), reverse=False)
-        endstates_e = [read_energy_file(x) for x in endstates_files]
+        endstates_e = [self.read_energy_file(x) for x in endstates_files]
         endstates_totals = np.array([], dtype=np.float64)
         enes = np.array([], dtype=np.float64)
-        reference = read_energy_file(self.REFERENCE)
+        reference = self.read_energy_file(self.REFERENCE)
+        vmix = self.read_energy_file(self.VMIX)
         #compute the energies for each endstate
         for i,hi in enumerate(endstates_e):
             #compute exponential term
@@ -222,6 +224,6 @@ class sampling(postprocessing.postprocessing):
                                                             lowest_energy[i], round(lowest_energy[i]*100/tot_con_2,2),
                                                             dG_diff[i]))
             fractions.append(lowest_energy[i]/tot_con_2)
-            
-        return fractions, endstates_e
+        energies = [vmix,reference] +  endstates_e    
+        return fractions, energies
 
