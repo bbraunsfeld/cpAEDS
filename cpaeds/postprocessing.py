@@ -69,6 +69,7 @@ class postprocessing(object):
                 temp_map.append(np.append(map[i],appendix[i]))
         else:
             logger.critical(f"Energymap shapes do not match")
+            logger.critical(f"{len(map)} != {len(appendix)}")
         return temp_map      
          
     def run_ene_ana(self):
