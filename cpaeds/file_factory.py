@@ -304,6 +304,8 @@ def build_output(settings_loaded,fractions,dF,rmsd):
     for i in range(1,n+1,1):
             body += f"{i},0,"
             for j in offsets:
+                print(j)
+                print(j[0])
                 body += f"{j[i-1]},"
             for j in fractions[i-1]:
                 body += f"{j},"
