@@ -43,7 +43,7 @@ class postprocessing(object):
         parent = os.getcwd()
         with set_directory(f"{parent}/rmsd"):
             rmsd_body = build_rmsd(self.config,self.config['simulation']['parameters']['NRUN'])
-            write_file2(rmsd_body,'rmsd_eq.arg')
+            write_file2(rmsd_body,'rmsd.arg')
 
     def create_output_dir(self):
         try:

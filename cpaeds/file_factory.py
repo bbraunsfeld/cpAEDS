@@ -287,13 +287,29 @@ def build_dfmult_file(settings_loaded):
 {endstates}"""
     return body
 
-def build_output(settings_loaded,fractions,dG,rmsd):
+def build_output(settings_loaded,fractions,dF,rmsd):
     #temporary fix to select first in offset list. Needs changes for multi state cpAEDS
-    offsets = settings_loaded['simulation']['parameters']['EIR_list'][0]
-    n= len(offsets)
-    body = f"""#RUN,OFFSET,FRACTION1,FRACTION2,dG,rmsd\n"""
-
+    offsets = settings_loaded['simulation']['parameters']['EIR_list']
+    n= len(offsets[0])
+    header = f"""#RUN,"""
+    offsets = f""""""
+    fractions = f""""""
+    dFs = f""""""
+    for i in range(settings_loaded['simulation']['NSTATES']):
+        offsets = f"OFFSET{i+1},"
+        fractions = f"FRACTION{i+1},"
+        dFs = f"dF{i+1},"
+    header = header + offsets + fractions + dFs + f"rmsd\n"
+    body = f""""""
     for i in range(1,n+1,1):
-            body += f"{i},{offsets[i-1]},{fractions[i-1][0]},{fractions[i-1][1]},{dG[i-1]},{rmsd[i-1]}\n"
-    return body
+            body += f"{i},0," ,{rmsd[i-1]}\n"
+            for j in offsets:
+                body += f"{j[i-1]},"
+            for j in fractions[i-1]:
+                body += f"{j},"
+            for j in dF:
+                body += f"{j[i-1]},"
+            body += f"{rmsd[i-1]}\n"
+    file = header + body        
+    return file
 
