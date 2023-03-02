@@ -247,7 +247,7 @@ def build_ene_ana(settings_loaded,NRUN):
     header = f"""@prop eds_vr eds_emin eds_emax eds_vmix eds_globmin eds_globminfluc """
     for i in range(nstates):
         header += f"e{i+1} e{i+1}s "
-    body = header + f"""\n @topo {topo}
+    body = header + f"""\n@topo {topo}
 @library ene_ana.md++.lib
 @en_files
 """
