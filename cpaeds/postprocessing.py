@@ -31,9 +31,9 @@ class postprocessing(object):
         with set_directory(f"{parent}/ene_ana"):
             copy_lib_file(f"{parent}/ene_ana",'ene_ana.md++.lib')
             ene_ana_body =  build_ene_ana(self.config,self.config['simulation']['parameters']['NRUN'])
-            write_file(ene_ana_body,'ene_ana.arg')
+            write_file2(ene_ana_body,'ene_ana.arg')
             df_file_body = build_dfmult_file(self.config)
-            write_file(df_file_body,'df.arg')
+            write_file2(df_file_body,'df.arg')
 
     def create_rmsd_dir(self):
         try:
@@ -43,7 +43,7 @@ class postprocessing(object):
         parent = os.getcwd()
         with set_directory(f"{parent}/rmsd"):
             rmsd_body = build_rmsd(self.config,self.config['simulation']['parameters']['NRUN'])
-            write_file(rmsd_body,'rmsd_eq.arg')
+            write_file2(rmsd_body,'rmsd_eq.arg')
 
     def create_output_dir(self):
         try:
