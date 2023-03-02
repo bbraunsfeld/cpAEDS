@@ -280,7 +280,7 @@ def build_dfmult_file(settings_loaded):
     temp = settings_loaded['simulation']['parameters']['temp']
     endstates = f"""@endstates """
     for i in range(settings_loaded['simulation']['NSTATES']):
-        endstates += f"e{i+1}.dat"
+        endstates += f"e{i+1}.dat "
     body = f"""
 @temp {temp}
 @stateR eds_vr.dat
