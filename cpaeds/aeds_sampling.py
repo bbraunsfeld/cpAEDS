@@ -157,7 +157,6 @@ class sampling():
         self.boltzman = 0.00831441
         self.OFFSETS = [0] + offsets
         self.FREE = dfs
-        print(self.FREE)
         self.config = config
         self.temp = self.config['simulation']['parameters']['temp']
         self.REFERENCE = "eds_vr.dat"
@@ -220,9 +219,9 @@ class sampling():
         #print("ENDSTATE  NUMBER\tCONT_FRAMES\tPERCENTATGE\tCountMIN\tPERCEN_MIN\tDG")
         fractions = []
         for i in range(n_states):
-            print("Endstates    %s\t\t%s\t\t%s\t\t%s\t\t%s\t\t%s" % (i, round(contributions[i],2), round(contributions[i]*100/tot_con,2), 
+            """print("Endstates    %s\t\t%s\t\t%s\t\t%s\t\t%s\t\t%s" % (i, round(contributions[i],2), round(contributions[i]*100/tot_con,2), 
                                                             lowest_energy[i], round(lowest_energy[i]*100/tot_con_2,2),
-                                                            dG_diff[i]))
+                                                            dG_diff[i]))"""
             fractions.append(lowest_energy[i]/tot_con_2)
         energies = [vmix,reference] +  endstates_e    
         return fractions, energies

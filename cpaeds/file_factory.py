@@ -292,14 +292,14 @@ def build_output(settings_loaded,fractions,dF,rmsd):
     offsets = settings_loaded['simulation']['parameters']['EIR_list']
     n= len(offsets[0])
     header = f"""#RUN,"""
-    offsets = f""""""
-    fractions = f""""""
-    dFs = f""""""
+    offset_header = f""""""
+    fraction_header = f""""""
+    dF_header = f""""""
     for i in range(settings_loaded['simulation']['NSTATES']):
-        offsets = f"OFFSET{i+1},"
-        fractions = f"FRACTION{i+1},"
-        dFs = f"dF{i+1},"
-    header = header + offsets + fractions + dFs + f"rmsd\n"
+        offset_header = f"OFFSET{i+1},"
+        fraction_header = f"FRACTION{i+1},"
+        dF_header = f"dF{i+1},"
+    header = header + offset_header + fraction_header + dF_header + f"rmsd\n"
     body = f""""""
     for i in range(1,n+1,1):
             body += f"{i},0,"
