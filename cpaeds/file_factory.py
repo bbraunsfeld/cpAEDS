@@ -302,7 +302,7 @@ def build_output(settings_loaded,fractions,dF,rmsd):
     header = header + offsets + fractions + dFs + f"rmsd\n"
     body = f""""""
     for i in range(1,n+1,1):
-            body += f"{i},0," ,{rmsd[i-1]}\n"
+            body += f"{i},0,"
             for j in offsets:
                 body += f"{j[i-1]},"
             for j in fractions[i-1]:
