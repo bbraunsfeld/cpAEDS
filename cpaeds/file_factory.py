@@ -235,6 +235,7 @@ def build_imd_file(settings_loaded,EIR,rs):
 def build_ene_ana(settings_loaded,NRUN):
     dir_path = os.getcwd()
     name = settings_loaded['system']['name']
+    nstates = settings_loaded['simulation']['NSTATES']
     topo = os.path.relpath(settings_loaded['system']['topo_file'], dir_path)
     equilibrate= settings_loaded['simulation']['equilibrate']
     if equilibrate[0] == True:
@@ -243,9 +244,10 @@ def build_ene_ana(settings_loaded,NRUN):
     else:
         start = 1
     NRUN = NRUN + 1
-
-    body = f"""@prop eds_vr e1 e2 e1s e2s e1r e2r eds_emin eds_emax eds_vmix eds_globmin eds_globminfluc
-@topo {topo}
+    header = f"""@prop eds_vr eds_emin eds_emax eds_vmix eds_globmin eds_globminfluc """
+    for i in range(nstates):
+        header += f"e{i+1} e{i+1}s "
+    body = header + f"""\n @topo {topo}
 @library ene_ana.md++.lib
 @en_files
 """
@@ -276,10 +278,13 @@ def build_rmsd(settings_loaded, NRUN):
 
 def build_dfmult_file(settings_loaded):
     temp = settings_loaded['simulation']['parameters']['temp']
+    endstates = f"""@endstates """
+    for i in range(settings_loaded['simulation']['NSTATES']):
+        endstates += f"e{i+1}.dat"
     body = f"""
 @temp {temp}
 @stateR eds_vr.dat
-@endstates e1.dat e2.dat"""
+{endstates}"""
     return body
 
 def build_output(settings_loaded,fractions,dG,rmsd):
