@@ -296,21 +296,19 @@ def build_output(settings_loaded,fractions,dF,rmsd):
     fraction_header = f""""""
     dF_header = f""""""
     for i in range(settings_loaded['simulation']['NSTATES']):
-        offset_header = f"OFFSET{i+1},"
-        fraction_header = f"FRACTION{i+1},"
-        dF_header = f"dF{i+1},"
+        offset_header += f"OFFSET{i+1},"
+        fraction_header += f"FRACTION{i+1},"
+        dF_header += f"dF{i+1},"
     header = header + offset_header + fraction_header + dF_header + f"rmsd\n"
     body = f""""""
     for i in range(1,n+1,1):
             body += f"{i},0,"
             for j in offsets:
-                print(j)
-                print(j[0])
                 body += f"{j[i-1]},"
             for j in fractions[i-1]:
                 body += f"{j},"
-            for j in dF:
-                body += f"{j[i-1]},"
+            for j in dF[i-1]:
+                body += f"{j},"
             body += f"{rmsd[i-1]}\n"
     file = header + body        
     return file

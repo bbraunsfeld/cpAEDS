@@ -19,7 +19,7 @@ from cpaeds.file_factory import build_ene_ana
 from cpaeds.context_manager import set_directory
 from cpaeds.logger import LoggerFactory
 
-logger = LoggerFactory.get_logger("system.py", log_level="INFO", file_name = "debug.log")
+logger = LoggerFactory.get_logger("utils.py", log_level="INFO", file_name = "debug.log")
 
 def load_config_yaml(config) -> dict:
     with open(f"{config}", "r") as stream:
