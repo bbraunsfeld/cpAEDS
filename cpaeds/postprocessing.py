@@ -169,15 +169,4 @@ class postprocessing(object):
                                         self.run_ene_ana()
                                         self.create_rmsd_dir()
                                         self.run_rmsd()
-                                        """ 
-                                        ### remove hard coding
-                                        if self.fraction_list[-1][0] > 0.15 and self.fraction_list[-1][0] < 0.85:
-                                            emix,tmix = read_energyfile(f'./eds_vmix.dat')
-                                            state,tstate = read_state_file(f'./statetser.dat')
-                                            self.column_name.append(f'run{i+1}[{self.dF_list[-1]}]')
-                                            self.density_map_emix.append([emix,tmix])
-                                            self.density_map_state.append([state,tstate])
-                                        else:
-                                            pass
-"""  
                     self.create_output_dir()
