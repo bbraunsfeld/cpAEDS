@@ -150,7 +150,9 @@ def write_prob_sampling(prob_outfile, prob_state, itime, step):
             out.write(out_string)
             time += step
 
+##################################################################
 ######## New sampling based on contribution to free energy #######
+##################################################################
 
 class sampling():
     def __init__(self, config, offsets, dfs):

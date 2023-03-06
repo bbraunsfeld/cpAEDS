@@ -14,6 +14,11 @@ from cpaeds.aeds_sampling import sampling
 logger = LoggerFactory.get_logger("postprocessing.py", log_level="INFO", file_name = "debug.log")
 
 class postprocessing(object):
+    """Reads in and stores all the data needed for the postproessing. Calculates dFs and sampling related values.
+       Stores results in an np-array
+    Args:
+        object (dict): finalsettings of the system setup.
+    """
     def __init__(self, settings: dict) -> None:
         self.config = settings
         self.equilibrate = self.config['simulation']['equilibrate']
@@ -23,6 +28,9 @@ class postprocessing(object):
         self.energy_map = self.initialise_energy_map()
 
     def create_ana_dir(self):
+        """
+        Creates a folder (ene_ana) with the argument files for gromos++ ene_ana and dfmult.
+        """
         try:
             os.mkdir('ene_ana')
         except FileExistsError:
@@ -36,6 +44,9 @@ class postprocessing(object):
             write_file2(df_file_body,'df.arg')
 
     def create_rmsd_dir(self):
+        """
+        Creates a folder (rmsd) with the argument file for gromos++ rmsd.
+        """
         try:
             os.mkdir('rmsd')
         except FileExistsError:
@@ -46,6 +57,9 @@ class postprocessing(object):
             write_file2(rmsd_body,'rmsd.arg')
 
     def create_output_dir(self):
+        """
+        Creates a folder (results) with the collected energies.npy and a results.out in csv-format.
+        """
         try:
             os.mkdir('results')
         except FileExistsError:
@@ -57,12 +71,18 @@ class postprocessing(object):
             np.save('energies.npy', np.array(self.energy_map), allow_pickle=False)
 
     def initialise_energy_map(self):
+        """
+        Initialises a list with empty np.arrays to store energies in.
+        """
         map = []
         for i in range(self.config['simulation']['NSTATES']+2):
             map.append(np.array([], dtype=np.float64))
         return map
     
     def update_energy_mapping(self,map, appendix):
+        """
+        Updates np.arrays with energies from sampling.
+        """
         if len(map) == len(appendix):
             temp_map = []
             for i in range(len(map)):
@@ -73,6 +93,9 @@ class postprocessing(object):
         return temp_map      
          
     def run_ene_ana(self):
+        """
+        executing gromos++ ene_ana and dfmult in the ene_ana dir. Executing sampling class.  
+        """
         parent = os.getcwd()
         with set_directory(f"{parent}/ene_ana"):
             exe = subprocess.run(
@@ -94,6 +117,9 @@ class postprocessing(object):
             self.energy_map = self.update_energy_mapping(self.energy_map, energies)
 
     def run_rmsd(self):
+        """
+        Running gromos++ rmsd in rmsd folder.
+        """
         parent = os.getcwd()
         with set_directory(f"{parent}/rmsd"):
             with open('rmsd.out', 'w') as sp:
@@ -104,6 +130,14 @@ class postprocessing(object):
                 self.rmsd_list.append(self.read_rmsd('rmsd.out'))
 
     def read_df(self,file):
+        """
+        Reads in df.out created by run_ene_ana.
+        Args:
+            file (txt): df.out
+
+        Returns:
+            list: list of free energies to reference state for each endstate. Sorted like 1,2,3,..,11,12.
+        """
         dfs = []
         with open(file, "r") as inn:
             for line in inn:
@@ -113,6 +147,14 @@ class postprocessing(object):
         return dfs
 
     def read_rmsd(self,file):
+        """
+        Reads rmsd.out.
+        Args:
+            file (txt): rmsd over time.
+
+        Returns:
+            float: rmsd between first and last snap.
+        """
         one_before_last = None
         last_line = None
         with open(file, "r") as inn:
@@ -124,6 +166,10 @@ class postprocessing(object):
         return rmsd
 
     def read_output(self, file):
+        """
+        Reads results.out.
+        Needs update.
+        """
         self.fraction_list = []
         offset_list = []
         with open(file, "r") as inn:
@@ -135,29 +181,40 @@ class postprocessing(object):
         return self.fraction_list,offset_list
     
     def offsets_sp(self,depth):
+        """
+        Deconstructs offsets from final_setting.yaml to get offsets for each single point calculation.
+        Args:
+            depth (_type_): _description_
+        """
         self.offsets = []
         for i in range(len(self.config['simulation']['parameters']['EIR_list'])):
             self.offsets.append(self.config['simulation']['parameters']['EIR_list'][i][depth]) 
     
     def run_postprocessing(self):
+            """
+            Loops through folders and runs pp functions.
+            """
             pdir_list = []
             stat_run_path = f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}"[:-1]
             starting_number = int(f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}"[-1:])
+            #For statistical run
             if int(self.config['simulation']['NSTATS']) > 1: 
                     for i in range(starting_number, self.config['simulation']['NSTATS'] + 1):
                             pdir_list.append(f"{stat_run_path}{i}")
                             pdir_list.sort(key=natural_keys)
             else:
                     pdir_list.append(f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}")
-            
+            #actual loop over stat dirs
             for pdir in pdir_list:
                     with set_directory(f"{pdir}"):
                         dir_list = get_dir_list()
+                        #single point calculation folders.
                         for i, dir in enumerate(dir_list):
                                 if dir == 'results':
                                         continue
                                 else:
                                     with set_directory(f"{pdir}/{dir}"):
+                                        #Checking for finished runs.
                                         self.run_finished, NOMD = check_finished(self.config)
                                         if self.run_finished == True:
                                             logger.info(f"Run in {dir} finished.")
@@ -169,4 +226,5 @@ class postprocessing(object):
                                         self.run_ene_ana()
                                         self.create_rmsd_dir()
                                         self.run_rmsd()
+                    #writing output                    
                     self.create_output_dir()
