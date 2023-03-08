@@ -6,48 +6,71 @@ import matplotlib.pyplot as plt
 import yaml
 from cpaeds.algorithms import ph_curve, log_fit, logistic_curve, inverse_log_curve
 from scipy.stats import linregress
+import os
 
 class Plot():
-    def __init__(self, datafile) -> None:
+    def __init__(self, basepath: str ="./", pKa: float = 4.81) -> None:
         """
-        Reads in the datafile which consists of a yaml file with the items "energies", "results", "vmix" and contains the corresponding filenames for the post-processing output files.
-        Also reads in the pKa from this file.
+        Takes the files "energies.npy" and "results.out" from a postprocessing-run and allows for plotting of the runs
 
         Args:
             datafile (_type_): _description_
         """
-        with open(datafile, "r") as f:
-            self.filenames = yaml.safe_load(f) 
-    
-        categories = ['energies', 'results', 'vmix']
-        
-        self.data = dict()
-        for cat in categories:
-            self.data[cat] = list()
-            for f in self.filenames[cat]:
-               self.data[cat].append(pd.read_csv(f))
-    
-        self.pka = self.filenames['pka']
+        # Read in the results and energies files
+        self.pka = pKa
+        path_energies = f"{basepath}/energies.npy" # Colums must be "vmix, v_r, e1, e2,..., en" for n states. Hierarchy: runs -> points -> values
+        path_results = f"{basepath}/results.out"
+
+        energy_arrays = np.load(path_energies)
+        e_colnames = ["vmix", "vr"] + [f"e{n}" for n in range(1, len(energy_arrays[0])-1) ]
+        self.energies = [pd.DataFrame(arr.T, columns=e_colnames) for arr in energy_arrays]
+        self.results = pd.read_csv(path_results, index_col = 0)
 
         return
     
 class StdPlot(Plot):
-    def __init__(self, datafile) -> None:
-        super().__init__(datafile)
+    def __init__(self, basepath: str ="./", pKa: float = 4.81) -> None:
+        super().__init__(basepath, pKa)
 
         return
     
-    def offset_fraction(self, ax=None):
+    def getOffset(self, states= -1) -> pd.DataFrame:
+        """
+        Returns a dataframe with the offsets of the given states
+
+        Args:
+            states (optinal): States to return the offset data from. Defaults to "-1"
+        Returns:
+            pd.DataFrame: _description_
+        """
+        df = self.results
+        offsets = df.loc[:, df.columns.str.startswith('OFFSET')]
+        return offsets.iloc[:, states]
+
+    def getFractions(self, states = slice(None) ) -> pd.DataFrame:
+        """
+        Returns a dataframe with the fractions of the given states
+
+        Args:
+            states (str, optional): States to return the data from. Defaults to ":".
+
+        Returns:
+            pd.DataFrame: _description_
+        """
+        df = self.results
+        fractions = df.loc[:, df.columns.str.startswith('FRACTION')]
+        return fractions.iloc[:, states]
+    
+    def offset_fraction(self, ax=None, refstate: int = -1):
         """
         Generates a plot with the offset on the x-axis and the fraction of the states on the y-axis.
         If there is only two states, it will only plot the fraction of the first state (assuming that fraction(1) + fraction(2) = 1)
 
         Args:
         """
-        df = self.data['results'][0]
-        x = df['OFFSET']
-        ys = df.loc[:, df.columns.str.startswith('FRACTION')]
-
+        x = self.getOffset(refstate)
+        ys = self.getFractions()
+        
         standalone = False
         if ax is None:
             standalone = True # Flag which indicates if the plot is passed to an ax object or not.
@@ -67,7 +90,7 @@ class StdPlot(Plot):
             plt.savefig("offset_fraction.png")
         gc.collect()
 
-    def offset_pH(self, state: int = -1, ax = None, linfit_subset: list = [0,-1]):
+    def offset_pH(self, state: int = -1, offset_state: int = -1, ax = None, linfit_subset: list = [0,-1]):
         """
         Generates a plot with the offset on the x-axis and the computed pH (from the pKa) on the y-axis.
         If no state is given, then the last state is assumed to be the fully deprotonated state.
@@ -78,9 +101,8 @@ class StdPlot(Plot):
         linfit_subset: list, can be used to subset the datapoints used for the linear fit. Defaults to all datapoints (from 0 to -1)
         """
 
-        df = self.data['results'][0]
-        x = df['OFFSET']
-        fractions = df.loc[:, df.columns.str.startswith('FRACTION')].iloc[:,state]
+        x = self.getOffset(offset_state)
+        fractions = self.getFractions(states=state)
 
         pH = ph_curve(self.pka, fractions)
 
@@ -111,7 +133,7 @@ class StdPlot(Plot):
 
         gc.collect() 
 
-    def offset_pH_fraction(self, state: int = -1, ax = None, linfit_subset: list = [0,-1], fit = 'log'):
+    def offset_pH_fraction(self, state: int = -1, offset_state: int = -1, ax = None, linfit_subset: list = [0,-1], fit = 'log'):
         """
         Generates a plot with the offset on the lower x-axis, the computed correspondign pH on the upper x-axis and the fraction of states on the y-axis.
 
@@ -119,10 +141,8 @@ class StdPlot(Plot):
             state (int, optional): index of state of the fully deprotonated form. Defaults to -1.
             fit (str, optional): either 'log' for logistic fit or 'lin' for linear fit
         """
-        df = self.data['results'][0]
-        offset = df['OFFSET']
-        fractions = df.loc[:, df.columns.str.startswith('FRACTION')].iloc[:,state]
-        x = offset
+        x = self.getOffset(states=offset_state)
+        fractions = self.getFractions(states=state)
         
         pH = ph_curve(self.pka, fractions)
 
@@ -160,7 +180,7 @@ class StdPlot(Plot):
 
         gc.collect() 
 
-    def fit_residuals(self, state=-1, ax = None, linfit_subset: list = [0,-1], fit = 'log'):
+    def fit_residuals(self, state=-1, offset_state: int = -1, ax = None, linfit_subset: list = [0,-1], fit = 'log'):
         """
         Plots a residual plot for the selected fit
 
@@ -170,10 +190,9 @@ class StdPlot(Plot):
             linfit_subset (list, optional): Subset data for linear fit. Has no effect if the fit type is set to 'log'. Defaults to [0,-1].
             fit (str, optional): Type of fit, either 'log' or 'lin'. Defaults to 'log'.
         """
-        df = self.data['results'][0]
-        x = df['OFFSET']
-        fractions = df.loc[:, df.columns.str.startswith('FRACTION')].iloc[:,state]
- 
+        x = self.getOffset(states=offset_state)
+        fractions = self.getFractions(states=state)
+
         pH = ph_curve(self.pka, fractions)
 
         # Fitting to the data
@@ -213,11 +232,16 @@ class StdPlot(Plot):
         gc.collect() 
 
 
-    def kde_vmix(self, ax= None):
-        df = self.data['vmix'][0]
-        df = df.set_index(df.columns[0])
+    def kde_vmix(self, ax= None, refstate: int = -1, threshold: list = [0.15, 0.85] ):
+        df = pd.DataFrame([runs['vmix'] for runs in self.energies])
+        df = df.transpose()
+        df.columns = [f"run {n}" for n in range(1, len(df.columns)+1)]
 
-        kdeplot = sns.kdeplot(df, fill=False, ax=ax)
+        fractions = self.getFractions(refstate)
+        run_selection = [i > threshold[0] and i < threshold[1] for i in fractions]
+
+
+        kdeplot = sns.kdeplot(df.iloc[:,run_selection], fill=False, ax=ax)
         fig = kdeplot.get_figure()
 
         if ax is None:
