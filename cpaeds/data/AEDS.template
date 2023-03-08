@@ -6,7 +6,7 @@ AEDS
 #     EMAX      EMIN
     {EMAX}    {EMIN}
 # EIR [1..NUMSTATES]
-         0      {EIR}
+    {EIR}
 # NTIAEDSS  RESTREMIN  BMAXTYPE      BMAX    ASTEPS    BSTEPS
          1          1         2         2       500     10000
 END

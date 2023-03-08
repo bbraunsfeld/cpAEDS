@@ -14,25 +14,34 @@ def natural_keys(text):
     '''
     return [ atoi(c) for c in re.split(r'(\d+)', text) ]
 
-def offset_steps(EIR_start,EIR_range,EIR_step_size,cpAEDS_type):
+def offset_steps(EIR_start,EIR_range,EIR_step_size,EIR_groups,cpAEDS_type):
     """
     Creates a list of offsets for different applications.
         cpAEDS_type = 1 -> search type application used with bigger EIR_step_size and has equal spacing between offset steps.
         cpAEDS_type = 2 -> production type application with smaller EIR_step_size close to EIR_start and bigger steps further away. 
     """
-    offsets=[]
-    for EIR in EIR_start:
-        if cpAEDS_type == 1:
-            offset_list = [*range(int(EIR-EIR_range/2),int(EIR+EIR_range/2+EIR_step_size),EIR_step_size)]
-            offset_list.sort()
-            offsets.append(offset_list)
+    offsets=[[]] * len(EIR_start)
+    for i, group in enumerate(EIR_groups):
+        if i == 0:
+            pass
         else:
-            offset_close_eq = [*range(int(EIR-8),int(EIR+8+EIR_step_size),EIR_step_size)]
-            offset_upper_limit = [*range(int(EIR-(EIR_range-8)/2-4*EIR_step_size),int(EIR-8),EIR_step_size*4)]
-            offset_lower_limit = [*range(int(EIR+8+4*EIR_step_size),int(EIR+EIR_range/2+EIR_step_size),EIR_step_size*4)]
-            offset_list = offset_close_eq + offset_upper_limit + offset_lower_limit
-            offset_list.sort()
-            offsets.append(offset_list)
+            for state in group:
+                EIR =  EIR_start[state]
+                if cpAEDS_type == 1:
+                    offset_list = [*range(int(EIR-EIR_range/2),int(EIR+EIR_range/2+EIR_step_size),EIR_step_size)]
+                    offset_list.sort()
+                    offsets[state].append(offset_list)
+                else:
+                    offset_close_eq = [*range(int(EIR-8),int(EIR+8+EIR_step_size),EIR_step_size)]
+                    offset_upper_limit = [*range(int(EIR-(EIR_range-8)/2-4*EIR_step_size),int(EIR-8),EIR_step_size*4)]
+                    offset_lower_limit = [*range(int(EIR+8+4*EIR_step_size),int(EIR+EIR_range/2+EIR_step_size),EIR_step_size*4)]
+                    offset_list = offset_close_eq + offset_upper_limit + offset_lower_limit
+                    offset_list.sort()
+                    offsets[state] = offset_list
+    n_offsets = len(offsets[EIR_groups[-1][-1]])
+    for i,lst in enumerate(offsets):
+        if len(lst) == 0:
+            offsets[i] = [0] * n_offsets
     return offsets
 
 def pKa_from_df(df,temp):

@@ -288,21 +288,27 @@ def build_dfmult_file(settings_loaded):
     return body
 
 def build_output(settings_loaded,fractions,dF,rmsd):
-    #temporary fix to select first in offset list. Needs changes for multi state cpAEDS
     offsets = settings_loaded['simulation']['parameters']['EIR_list']
     n= len(offsets[0])
     header = f"""#RUN,"""
     offset_header = f""""""
     fraction_header = f""""""
     dF_header = f""""""
+
     for i in range(settings_loaded['simulation']['NSTATES']):
         offset_header += f"OFFSET{i+1},"
         fraction_header += f"FRACTION{i+1},"
         dF_header += f"dF{i+1},"
+
     header = header + offset_header + fraction_header + dF_header + f"rmsd\n"
     body = f""""""
+
     for i in range(1,n+1,1):
-            body += f"{i},0,"
+            if len(settings_loaded['simulation']['parameters']['EIR_start']) == settings_loaded['simulation']['NSTATES']:
+                body += f"{i},"
+            else:
+                body += f"{i},0,"
+
             for j in offsets:
                 body += f"{j[i-1]},"
             for j in fractions[i-1]:

@@ -161,15 +161,25 @@ class SetupSystem(object):
             logger.info(f"Default run with 2 endstates")
         if 'EIR_start' in self.config['simulation']['parameters']:
             if isinstance(self.config['simulation']['parameters']['EIR_start'], list):
+                if len(self.config['simulation']['parameters']['EIR_start']) != self.config['simulation']['NSTATES']:
+                    self.config['simulation']['parameters']['EIR_start'] = [0] + self.config['simulation']['parameters']['EIR_start']
                 logger.info(f"Starting offset: {self.config['simulation']['parameters']['EIR_start']}")
             elif isinstance(self.config['simulation']['parameters']['EIR_start'], float):
-                self.config['simulation']['parameters']['EIR_start'] = [self.config['simulation']['parameters']['EIR_start']]
+                self.config['simulation']['parameters']['EIR_start'] = [0, self.config['simulation']['parameters']['EIR_start']]
                 logger.info(f"Starting offset: {self.config['simulation']['parameters']['EIR_start']}")
             elif isinstance(self.config['simulation']['parameters']['EIR_start'], int):
-                self.config['simulation']['parameters']['EIR_start'] = [self.config['simulation']['parameters']['EIR_start']]
+                self.config['simulation']['parameters']['EIR_start'] = [0, self.config['simulation']['parameters']['EIR_start']]
                 logger.info(f"Starting offset: {self.config['simulation']['parameters']['EIR_start']}")
         else:
             logger.critical(f"No value for EIR_start in input yaml.")
+            sys.exit()
+        if 'EIR_groups' in self.config['simulation']['parameters']:
+            logger.info(f"Offset groups: {self.config['simulation']['parameters']['EIR_groups']}")
+        elif 'EIR_groups' not in self.config['simulation']['parameters'] and self.config['simulation']['NSTATES'] == 2:
+            self.config['simulation']['parameters']['EIR_groups'] = [[0],[1]]
+            logger.info(f"Offset groups: {self.config['simulation']['parameters']['EIR_groups']}")
+        else:
+            logger.critical(f"No EIR_groups in input yaml and more than 2 endstates.")
             sys.exit()
         if 'equilibrate' in self.config['simulation']:
             if int(self.config['simulation']['equilibrate'][0]) == True:
@@ -216,6 +226,7 @@ class SetupSystem(object):
         offsets = offset_steps(self.config['simulation']['parameters']['EIR_start'],
                                     self.config['simulation']['parameters']['EIR_range'],
                                     self.config['simulation']['parameters']['EIR_step_size'],
+                                    self.config['simulation']['parameters']['EIR_groups'],
                                     self.config['simulation']['cpAEDS_type'])
         self.config['simulation']['parameters']['EIR_list'] = offsets
         self.config['simulation']['parameters']['n_runs'] = len(offsets[0])
