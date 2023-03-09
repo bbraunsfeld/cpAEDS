@@ -31,7 +31,7 @@ def offset_steps(EIR_start,EIR_range,EIR_step_size,EIR_groups,cpAEDS_type):
                     offset_list = [*range(int(EIR-EIR_range/2),int(EIR+EIR_range/2+EIR_step_size),EIR_step_size)]
                     offset_list.sort()
                     offsets[state].append(offset_list)
-                else:
+                elif cpAEDS_type == 2:
                     offset_close_eq = [*range(int(EIR-8),int(EIR+8+EIR_step_size),EIR_step_size)]
                     offset_upper_limit = [*range(int(EIR-(EIR_range-8)/2-4*EIR_step_size),int(EIR-8),EIR_step_size*4)]
                     offset_lower_limit = [*range(int(EIR+8+4*EIR_step_size),int(EIR+EIR_range/2+EIR_step_size),EIR_step_size*4)]

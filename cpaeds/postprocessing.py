@@ -26,6 +26,7 @@ class postprocessing(object):
         self.dF_list = []
         self.rmsd_list = []
         self.energy_map = self.initialise_energy_map()
+        self.energy_runs = []
 
     def create_ana_dir(self):
         """
@@ -68,7 +69,7 @@ class postprocessing(object):
         with set_directory(f"{parent}/results"):
             output_body = build_output(self.config,self.fraction_list,self.dF_list,self.rmsd_list)
             write_file2(output_body,'results.out')
-            np.save('energies.npy', np.array(self.energy_map), allow_pickle=False)
+            np.save('energies.npy', np.array(self.energy_runs), allow_pickle=False)
 
     def initialise_energy_map(self):
         """
@@ -114,7 +115,9 @@ class postprocessing(object):
             samples = sampling(self.config,self.offsets,df)
             fractions, energies = samples.main()
             self.fraction_list.append(fractions)
-            self.energy_map = self.update_energy_mapping(self.energy_map, energies)
+            self.energy_runs.append(energies)
+            #self.energy_map = self.update_energy_mapping(self.energy_map, energies)
+
 
     def run_rmsd(self):
         """
