@@ -32,6 +32,8 @@ class StdPlot(Plot):
     def __init__(self, basepath: str ="./", pKa: float = 4.81) -> None:
         super().__init__(basepath, pKa)
 
+        self.ph_curve_deprot = lambda pKa, f: ph_curve(pKa, [1-i for i in f])
+
         return
     
     def getOffset(self, states= -1) -> pd.DataFrame:
@@ -104,7 +106,7 @@ class StdPlot(Plot):
         x = self.getOffset(offset_state)
         fractions = self.getFractions(states=state)
 
-        pH = ph_curve(self.pka, fractions)
+        pH = self.ph_curve_deprot(self.pka, fractions)
 
         # Fitting to the data
         x_subset = x[linfit_subset[0]:linfit_subset[1]]
@@ -144,7 +146,7 @@ class StdPlot(Plot):
         x = self.getOffset(states=offset_state)
         fractions = self.getFractions(states=state)
         
-        pH = ph_curve(self.pka, fractions)
+        pH = self.ph_curve_deprot(self.pka, fractions)
 
         # Fitting to the data
         if fit == 'lin':
@@ -193,7 +195,7 @@ class StdPlot(Plot):
         x = self.getOffset(states=offset_state)
         fractions = self.getFractions(states=state)
 
-        pH = ph_curve(self.pka, fractions)
+        pH = self.ph_curve_deprot(self.pka, fractions)
 
         # Fitting to the data
         if fit == 'lin':
@@ -243,77 +245,129 @@ class StdPlot(Plot):
 
         kdeplot = sns.kdeplot(df.iloc[:,run_selection], fill=False, ax=ax)
         fig = kdeplot.get_figure()
+        kdeplot.set(title="kde_vmix")
 
         if ax is None:
             fig.savefig("kde_vmix.png")
 
         gc.collect()
 
-    def kde_e(self, axes: list = None, which: list = None):
+
+    def kde_e(self, axes: list = None, states: list = None, threshold: list = [0.15, 0.85], refstate: int = -1 ):
         """
         Generates kde plots for different states.
 
         Args:
             axes (list, optional): List of axes to plot on. Default generates a new plot for each state.
-            which (list, optional): e_1 corresponds to index 0! List of states to plot. Needs to be the same length as axes. Default plots all states.
+            states (list, optional): e_1 corresponds to index 0! List of states to plot. Needs to be the same length as axes. Default plots all states.
 
         Raises:
-            ValueError: axes and which need to be the same length.
+            ValueError: axes and states need to be the same length.
         """
-        if  axes is not None and which is not None:
-            # Raise value error if length of which and axes is not the same and neither of them is None
-            if not len(axes) == len(which):
+        
+        # Get the indices of the interesting runs (those where the fraction of the refstate is between the set threshold values)
+        fractions = self.getFractions(refstate)
+        run_selection = [i > threshold[0] and i < threshold[1] for i in fractions]
+
+        # dfs is a list containing dataframes of each run with the states in the columns
+        dfs = [run.loc[:, run.columns.str.startswith('e')] for run in self.energies]        
+
+        # dfs_runs is a list containing dataframes where each dataframe corresponds to a state and the columns are the run numbers.
+        dfs_runs = list()
+        for state in range(len(dfs[0].columns)):
+            dfs_runs.append(pd.DataFrame([df.iloc[:,state] for df in dfs]).transpose())
+            dfs_runs[-1].columns = [f"e{state+1}_run{n}" for n in range(1, len(dfs)+1)]
+            dfs_runs[-1].reset_index(drop=True, inplace=True)
+
+        # Input validation and set-up of plotting type (standalone or as axes object)
+        if  axes is not None and states is not None:
+            # Raise value error if length of states and axes is not the same and neither of them is None
+            if not len(axes) == len(states):
                 raise ValueError
 
-        if which is None:
-            dfs = self.data['energies']
-            which = range(0, len(self.data['energies']))
-        else:
-            dfs = [self.data['energies'][n] for n in which]
+        if states is None:
+            states = range(0, len(dfs_runs))
 
         standalone = False
         if axes is None:
-            axes = [None for n in dfs]
+            axes = [None for n in dfs_runs]
             standalone = True
 
-        for n, df, ax in zip(which, dfs, axes):
-            df = df.set_index(df.columns[0])
-            kdeplot = sns.kdeplot(df, ax=ax)
+        # plotting
+        for state, ax in zip(states, axes):
+            kdeplot = sns.kdeplot(dfs_runs[state].iloc[:,run_selection], ax=ax)
             fig = kdeplot.get_figure()
-            kdeplot.set(title=f"e_{n+1}")
+            kdeplot.set(title=f"e_{range(0,len(dfs_runs))[state]+1}")
 
             if standalone:
-                fig.savefig(f"e_{n+1}.png")
+                fig.savefig(f"e_{range(0,len(dfs_runs))[state]+1}.png")
+                fig.close()
 
         gc.collect()
 
 
-    def kde_ees(self, which: list = None, ax = None):
+    def kde_ees(self, states: list = None, ax = None, threshold: list = [0.15, 0.85], refstate: int = -1):
         """
-        Generates kernel density estimate plots for the given energies and plots them onto a single plot.
+        Generates kernel density estimate plots for the given states and plots them onto a single plot, concatenating the given energy states
 
         Args:
-            which (list, optional): Which energies to plot - 0 based list. Default plots all energies.
+            states (list, optional): Which energies to plot - 0 based list. Default plots all energies.
             ax (_type_, optional): Ax object onto which to plot the kde. Default generates a new figure and saved it to a file in the cwd.
         """
+        # Get the indices of the interesting runs (those where the fraction of the refstate is between the set threshold values)
+        fractions = self.getFractions(refstate)
+        run_selection = [i > threshold[0] and i < threshold[1] for i in fractions]
 
-        dfs = self.data['energies']
+       # dfs is a list containing dataframes of each run with the states in the columns
+        dfs = [run.loc[:, run.columns.str.startswith('e')] for run in self.energies]
 
-        if which is None:
-            which = range(0, len(dfs))
+        if states is None:
+            states = range(0, len(dfs[0].columns))
 
-        dfs = [dfs[n].set_index(dfs[n].columns[0]) for n in which]
+        # dfs_combined_e is a DataFrame containing the concatenated energies of the selected states separated by the run number.
+        df_combined_e = pd.DataFrame()
+        for run, df in enumerate(dfs):
+            comb_e = df.iloc[:,states].values
+            comb_e = comb_e.reshape(comb_e.size)
+            colname = f'run{run+1}_e{[s + 1 for s in states]}'
+            df_combined_e[colname] = comb_e
 
         standalone = False
         if ax is None:
             standalone = True
 
-        for df in dfs:
-            kdeplot = sns.kdeplot(df, ax=ax)
-        kdeplot.set(title=f"e_{'_'.join([str(e+1) for e in which])}")
+        # plotting
+        kdeplot = sns.kdeplot(df_combined_e.iloc[:,run_selection], ax=ax)
+        fig = kdeplot.get_figure()
+        kdeplot.set(title=f"e_{[s + 1 for s in states]}")
 
         if standalone:
-            fig = kdeplot.get_figure()
-            fig.savefig(f"e_{'_'.join([str(e+1) for e in which])}.png")
-        
+            fig.savefig(f"e_{[s + 1 for s in states]}.png")
+
         gc.collect()
+
+        """
+        This method is not yet implemented, but on the To-Do list.
+def kde_ridge_plot(df,x,y="runs"):
+    sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
+    df_t1 = pd.read_csv(df)
+    df_t_melt,hue = merge_columns(df_t1,['runs', 'states'])
+    pal = sns.cubehelix_palette(len(df_t_melt[y].unique()), start=1.4, rot=-.25, light=.7, dark=.4)
+    g = sns.FacetGrid(df_t_melt, row=y, hue=y, aspect=20, height=.5, palette=pal)
+    g.map(sns.kdeplot, x, bw_adjust=.6, cut=5, clip_on=False, fill=True, alpha=1, linewidth=1.5)
+    g.map(sns.kdeplot, x, bw_adjust=.6, cut=5, clip_on=False, color="w", lw=2)
+    g.map(plt.axhline, y=0, linewidth=2, linestyle="-", color=None, clip_on=False)
+
+    def label(x, color, label):
+        ax = plt.gca()
+        ax.text(0, .1, label, fontweight="bold", color=color,
+                ha="left", va="center", transform=ax.transAxes)
+
+    g.map(label, y)
+    g.fig.subplots_adjust(hspace=-.7)
+    g.set(yticks=[], xlabel=x, ylabel="", xlim=(None, 0), title="")
+    g.despine(bottom=True, left=True)
+    plt.savefig(f'./kde_states_{x}.png') 
+    plt.close('all')
+    gc.collect()
+        """
