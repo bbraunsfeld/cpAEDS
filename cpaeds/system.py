@@ -3,16 +3,19 @@ import copy
 import os
 import subprocess
 import sys
+from tqdm import tqdm
 # cpaeds modules
 from cpaeds.algorithms import natural_keys, offset_steps
 from cpaeds.logger import LoggerFactory
-from cpaeds.utils import get_dir_list, copy_lib_file, write_file, create_ana_dir, dumb_full_config_yaml
+from cpaeds.utils import get_dir_list, copy_lib_file, write_file, dumb_full_config_yaml
 from cpaeds.context_manager import set_directory
 from cpaeds.file_factory import build_mk_script_file,build_job_file,build_imd_file
 
 # setting logger name and log level
 logger = LoggerFactory.get_logger("system.py", log_level="INFO", file_name = "debug.log")
 
+### TO DO
+# throws wrong critical for missing md file
 class SetupSystem(object):
     def __init__(self, settings: dict):
         """
@@ -133,17 +136,13 @@ class SetupSystem(object):
 
         files = [f for f in os.listdir(self.md_dir) if os.path.isfile(os.path.join(self.md_dir, f))]
         cnf_list=[]
-        imd_list=[]
         for file in files:
             if file.endswith('.cnf'):
                 cnf_list.append(file)
-            if file.endswith('.imd'):
-                imd_list.append(file)
         cnf_list.sort(key=natural_keys)
-        imd_list.sort(key=natural_keys)
         self.config['system']['cnf_file'] = f"{cnf_list[-1]}"
         logger.info(f"{self.config['system']['cnf_file']} found.")
-        self.config['system']['ref_imd'] = f"{imd_list[-1]}" 
+        self.config['system']['ref_imd'] = f"{cnf_list[-1][:-4]}.imd" 
         logger.info(f"{self.config['system']['ref_imd']} found.")
 
     def __check_simulation_settings(self):
@@ -160,6 +159,28 @@ class SetupSystem(object):
         else:
             self.config['simulation']['NSTATES'] = 2
             logger.info(f"Default run with 2 endstates")
+        if 'EIR_start' in self.config['simulation']['parameters']:
+            if isinstance(self.config['simulation']['parameters']['EIR_start'], list):
+                if len(self.config['simulation']['parameters']['EIR_start']) != self.config['simulation']['NSTATES']:
+                    self.config['simulation']['parameters']['EIR_start'] = [0] + self.config['simulation']['parameters']['EIR_start']
+                logger.info(f"Starting offset: {self.config['simulation']['parameters']['EIR_start']}")
+            elif isinstance(self.config['simulation']['parameters']['EIR_start'], float):
+                self.config['simulation']['parameters']['EIR_start'] = [0, self.config['simulation']['parameters']['EIR_start']]
+                logger.info(f"Starting offset: {self.config['simulation']['parameters']['EIR_start']}")
+            elif isinstance(self.config['simulation']['parameters']['EIR_start'], int):
+                self.config['simulation']['parameters']['EIR_start'] = [0, self.config['simulation']['parameters']['EIR_start']]
+                logger.info(f"Starting offset: {self.config['simulation']['parameters']['EIR_start']}")
+        else:
+            logger.critical(f"No value for EIR_start in input yaml.")
+            sys.exit()
+        if 'EIR_groups' in self.config['simulation']['parameters']:
+            logger.info(f"Offset groups: {self.config['simulation']['parameters']['EIR_groups']}")
+        elif 'EIR_groups' not in self.config['simulation']['parameters'] and self.config['simulation']['NSTATES'] == 2:
+            self.config['simulation']['parameters']['EIR_groups'] = [[0],[1]]
+            logger.info(f"Offset groups: {self.config['simulation']['parameters']['EIR_groups']}")
+        else:
+            logger.critical(f"No EIR_groups in input yaml and more than 2 endstates.")
+            sys.exit()
         if 'equilibrate' in self.config['simulation']:
             if int(self.config['simulation']['equilibrate'][0]) == True:
                 logger.info(f"Standard equilibration set to {self.config['simulation']['equilibrate'][1]}")  
@@ -172,6 +193,11 @@ class SetupSystem(object):
         else:
             self.config['simulation']['cpAEDS_type'] = 1
             logger.info(f"No cpAEDS_type found. Default set to 1")
+        if 'temp' in self.config['simulation']['parameters']:
+            pass
+        else:
+            self.config['simulation']['parameters']['temp'] = 300
+            logger.info(f"Setting simulation temperature to 300 K")
         if  ( 
             self.config['simulation']['parameters'].get('NRUN') == None or
             self.config['simulation']['parameters'].get('NSTLIM') == None or 
@@ -197,13 +223,15 @@ class SetupSystem(object):
         self.__check_simulation_settings()
 
     def __create_offsets(self):
-        offset_list = offset_steps(self.config['simulation']['parameters']['EIR_start'],
+        offsets = offset_steps(self.config['simulation']['parameters']['EIR_start'],
                                     self.config['simulation']['parameters']['EIR_range'],
                                     self.config['simulation']['parameters']['EIR_step_size'],
+                                    self.config['simulation']['parameters']['EIR_groups'],
                                     self.config['simulation']['cpAEDS_type'])
-        self.config['simulation']['parameters']['EIR_list'] = offset_list
-        self.config['simulation']['parameters']['n_runs'] = len(offset_list)
-        logger.info(f"List of offsets {offset_list}.")
+        self.config['simulation']['parameters']['EIR_list'] = offsets
+        self.config['simulation']['parameters']['n_runs'] = len(offsets[0])
+        for i in range(len(offsets)):
+            logger.info(f"List of offsets {offsets[i]} for state {i+1}.")
 
 
     def __create_folders(self):
@@ -231,7 +259,7 @@ class SetupSystem(object):
             with set_directory(f"{pdir}"):
                 dir_list = get_dir_list()
                 eir_counter = 0
-                for dir in dir_list:
+                for dir in tqdm(dir_list):
                     with set_directory(f"{pdir}/{dir}"):
                         if self.config['system']['lib_type'] == f"cuda":
                             copy_lib_file(os.getcwd(),'mk_script_cuda_8_slurm.lib')
@@ -241,10 +269,11 @@ class SetupSystem(object):
                         write_file(mk_script_body,'aeds_mk_script.arg')
                         job_file_body = build_job_file(self.config)
                         write_file(job_file_body,'aeds.job')
-                        EIR = self.config['simulation']['parameters']['EIR_list'][eir_counter]
+                        ### parses list of EIRS on same level
+                        EIR = [item[eir_counter] for item in self.config['simulation']['parameters']['EIR_list']]
+                        logger.info(f"EIR parsed to build_imd {EIR}.")
                         imd_file_body = build_imd_file(self.config,EIR,random_seed) 
                         write_file(imd_file_body,'aeds.imd')
-                        create_ana_dir(self.config)
 
                         if os.path.exists(f"{pdir}/{dir}/aeds_{self.config['system']['name']}_1.imd"):
                             logger.info(f"imd and run files exist")
@@ -260,10 +289,10 @@ class SetupSystem(object):
                             exe.check_returncode()
                             logger.info(f'Finished running mk_script.')   
                         eir_counter += 1
-                    settings_updated = copy.deepcopy(self.config)
-                    settings_updated['system']['output_dir_name']=f"{self.output_dir}_{random_seed}"
-                    dumb_full_config_yaml(settings_updated)
-                    random_seed += 1
+                settings_updated = copy.deepcopy(self.config)
+                settings_updated['system']['output_dir_name']=f"{self.output_dir}_{random_seed}"
+                dumb_full_config_yaml(settings_updated)
+                random_seed += 1
 
     def create_prod_run(self):
         self.__create_offsets()

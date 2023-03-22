@@ -3,5 +3,8 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"settings": {
+		"python.pythonPath": "/opt/anaconda3/envs/constph/bin/python"
+	}
 }
