@@ -224,7 +224,7 @@ class sampling():
             """print("Endstates    %s\t\t%s\t\t%s\t\t%s\t\t%s\t\t%s" % (i, round(contributions[i],2), round(contributions[i]*100/tot_con,2), 
                                                             lowest_energy[i], round(lowest_energy[i]*100/tot_con_2,2),
                                                             dG_diff[i]))"""
-            fractions.append(lowest_energy[i]/tot_con_2)
+            fractions.append(contributions[i]/tot_con_2)
         energies = [vmix,reference] +  endstates_e    
         return fractions, energies
 
