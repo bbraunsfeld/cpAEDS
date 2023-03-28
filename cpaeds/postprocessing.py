@@ -1,7 +1,8 @@
 import os
-from tqdm import tqdm
 import subprocess
 import numpy as np
+from glob import glob
+
 ##cpaeds 
 from cpaeds.algorithms import natural_keys
 from cpaeds.context_manager import set_directory
@@ -210,24 +211,21 @@ class postprocessing(object):
             #actual loop over stat dirs
             for pdir in pdir_list:
                     with set_directory(f"{pdir}"):
-                        dir_list = get_dir_list()
+                        dir_list = glob(f"{pdir}/{self.config['system']['output_dir_name']}_*/")
                         #single point calculation folders.
                         for i, dir in enumerate(dir_list):
-                                if dir == 'results':
-                                        continue
-                                else:
-                                    with set_directory(f"{pdir}/{dir}"):
-                                        #Checking for finished runs.
-                                        self.run_finished, NOMD = check_finished(self.config)
-                                        if self.run_finished == True:
-                                            logger.info(f"Run in {dir} finished.")
-                                        else:
-                                            logger.info(f"Run in {dir} unfinished.")
-                                        #rmsd & ene ana
-                                        self.offsets_sp(i)
-                                        self.create_ana_dir()
-                                        self.run_ene_ana()
-                                        self.create_rmsd_dir()
-                                        self.run_rmsd()
+                                with set_directory(dir):
+                                    #Checking for finished runs.
+                                    self.run_finished, NOMD = check_finished(self.config)
+                                    if self.run_finished == True:
+                                        logger.info(f"Run in {dir} finished.")
+                                    else:
+                                        logger.info(f"Run in {dir} unfinished.")
+                                    #rmsd & ene ana
+                                    self.offsets_sp(i)
+                                    self.create_ana_dir()
+                                    self.run_ene_ana()
+                                    self.create_rmsd_dir()
+                                    self.run_rmsd()
                     #writing output                    
                     self.create_output_dir()
