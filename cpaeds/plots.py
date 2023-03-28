@@ -41,7 +41,7 @@ class StdPlot(Plot):
         Returns a dataframe with the offsets of the given states
 
         Args:
-            states (optinal): States to return the offset data from. Defaults to "-1"
+            states (optional): States to return the offset data from. Defaults to "-1"
         Returns:
             pd.DataFrame: _description_
         """
@@ -234,7 +234,7 @@ class StdPlot(Plot):
         gc.collect() 
 
 
-    def kde_vmix(self, ax= None, refstate: int = -1, threshold: list = [0.15, 0.85] ):
+    def kde_vmix(self, ax= None, refstate: int = -1, threshold: list = [0.15, 0.85], subsample: float = 0.01 ):
         df = pd.DataFrame([runs['vmix'] for runs in self.energies])
         df = df.transpose()
         df.columns = [f"run {n}" for n in range(1, len(df.columns)+1)]
@@ -243,7 +243,7 @@ class StdPlot(Plot):
         run_selection = [i > threshold[0] and i < threshold[1] for i in fractions]
 
 
-        kdeplot = sns.kdeplot(df.iloc[:,run_selection], fill=False, ax=ax)
+        kdeplot = sns.kdeplot(df.iloc[:,run_selection].sample(frac=subsample), fill=False, ax=ax)
         fig = kdeplot.get_figure()
         kdeplot.set(title="kde_vmix")
 
@@ -253,7 +253,7 @@ class StdPlot(Plot):
         gc.collect()
 
 
-    def kde_e(self, axes: list = None, states: list = None, threshold: list = [0.15, 0.85], refstate: int = -1 ):
+    def kde_e(self, axes: list = None, states: list = None, threshold: list = [0.15, 0.85], refstate: int = -1, subsample: float=0.01):
         """
         Generates kde plots for different states.
 
@@ -295,7 +295,7 @@ class StdPlot(Plot):
 
         # plotting
         for state, ax in zip(states, axes):
-            kdeplot = sns.kdeplot(dfs_runs[state].iloc[:,run_selection], ax=ax)
+            kdeplot = sns.kdeplot(dfs_runs[state].iloc[:,run_selection].sample(frac=subsample), ax=ax)
             fig = kdeplot.get_figure()
             kdeplot.set(title=f"e_{range(0,len(dfs_runs))[state]+1}")
 
@@ -306,7 +306,7 @@ class StdPlot(Plot):
         gc.collect()
 
 
-    def kde_ees(self, states: list = None, ax = None, threshold: list = [0.15, 0.85], refstate: int = -1):
+    def kde_ees(self, states: list = None, ax = None, threshold: list = [0.15, 0.85], refstate: int = -1, subsample: float=0.01):
         """
         Generates kernel density estimate plots for the given states and plots them onto a single plot, concatenating the given energy states
 
@@ -337,7 +337,7 @@ class StdPlot(Plot):
             standalone = True
 
         # plotting
-        kdeplot = sns.kdeplot(df_combined_e.iloc[:,run_selection], ax=ax)
+        kdeplot = sns.kdeplot(df_combined_e.iloc[:,run_selection].sample(frac=subsample), ax=ax)
         fig = kdeplot.get_figure()
         kdeplot.set(title=f"e_{[s + 1 for s in states]}")
 
