@@ -157,7 +157,7 @@ def write_prob_sampling(prob_outfile, prob_state, itime, step):
 class sampling():
     def __init__(self, config, offsets, dfs):
         self.boltzman = 0.00831441
-        self.OFFSETS = [0] + offsets
+        self.OFFSETS = offsets
         self.FREE = dfs
         self.config = config
         self.temp = self.config['simulation']['parameters']['temp']
