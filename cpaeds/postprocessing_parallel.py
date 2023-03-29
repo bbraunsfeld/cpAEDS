@@ -253,7 +253,7 @@ class postprocessing_parallel(object):
         for pdir in tqdm(pdir_list):
             with set_directory(pdir):
                 dir_list = glob(f"{pdir}/{self.config['system']['output_dir_name']}_*/")
-                for n, dir in tqdm(enumerate(dir_list), desc="subdir"):
+                for n, dir in tqdm(enumerate(dir_list), desc="subdir", total=len(dir_list)):
                     with set_directory(dir+"/ene_ana"):
                         #logger.info(f"processing {dir}")
                         df = self.read_df('./df.out')
