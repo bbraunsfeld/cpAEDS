@@ -1,21 +1,22 @@
 import os
+from tqdm import tqdm
 import subprocess
 import numpy as np
 from glob import glob
-
+import multiprocessing
 ##cpaeds 
 from cpaeds.algorithms import natural_keys
 from cpaeds.context_manager import set_directory
 from cpaeds.logger import LoggerFactory
 from cpaeds.file_factory import build_ene_ana, build_rmsd, build_dfmult_file, build_output
-from cpaeds.utils import get_dir_list, write_file,  write_file2, copy_lib_file, check_finished
+from cpaeds.utils import write_file2, copy_lib_file, check_finished
 from cpaeds.aeds_sampling import sampling
 
 # setting logger name and log level
 logger = LoggerFactory.get_logger("postprocessing.py", log_level="INFO", file_name = "debug.log")
 
-class postprocessing(object):
-    """Reads in and stores all the data needed for the postproessing. Calculates dFs and sampling related values.
+class postprocessing_parallel(object):
+    """Reads in and stores all the data needed for the postprocessing. Calculates dFs and sampling related values.
        Stores results in an np-array
     Args:
         object (dict): finalsettings of the system setup.
@@ -111,14 +112,6 @@ class postprocessing(object):
                         exe = subprocess.run(
                                             ['dfmult', '@f', 'df.arg'], 
                                             stdout=sp)
-            df = self.read_df(f'./df.out')
-            self.dF_list.append(df)
-            samples = sampling(self.config,self.offsets,df)
-            fractions, energies = samples.main()
-            self.fraction_list.append(fractions)
-            self.energy_runs.append(energies)
-            #self.energy_map = self.update_energy_mapping(self.energy_map, energies)
-
 
     def run_rmsd(self):
         """
@@ -131,7 +124,6 @@ class postprocessing(object):
                                     ['rmsd', '@f', 'rmsd.arg'], 
                                     stdout=sp)
                 exe.check_returncode()
-                self.rmsd_list.append(self.read_rmsd('rmsd.out'))
 
     def read_df(self,file):
         """
@@ -193,39 +185,85 @@ class postprocessing(object):
         self.offsets = []
         for i in range(len(self.config['simulation']['parameters']['EIR_list'])):
             self.offsets.append(self.config['simulation']['parameters']['EIR_list'][i][depth]) 
-    
-    def run_postprocessing(self):
-            """
-            Loops through folders and runs pp functions.
-            """
-            pdir_list = []
-            stat_run_path = f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}"[:-1]
-            starting_number = int(f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}"[-1:])
-            #For statistical run
-            if int(self.config['simulation']['NSTATS']) > 1: 
-                    for i in range(starting_number, self.config['simulation']['NSTATS'] + 1):
-                            pdir_list.append(f"{stat_run_path}{i}")
-                            pdir_list.sort(key=natural_keys)
+
+    def run_postprocessing_parallel(self, tasks: int=1):
+        """
+        Runs the postprocessing in parallel with *tasks* tasks
+
+        Args:
+            tasks (int, optional): Number of tasks to run in parallel. Defaults to 1.
+        """
+        pdir_list = []
+        stat_run_path = f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}"[:-1]
+        starting_number = int(f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}"[-1:])
+        #For statistical run
+        if int(self.config['simulation']['NSTATS']) > 1: 
+                for i in range(starting_number, self.config['simulation']['NSTATS'] + 1):
+                        pdir_list.append(f"{stat_run_path}{i}")
+                        pdir_list.sort(key=natural_keys)
+        else:
+                pdir_list.append(f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}")
+
+        for pdir in pdir_list:
+            with set_directory(pdir):
+                dir_list = glob(f"{pdir}/{self.config['system']['output_dir_name']}_*/")
+
+                with multiprocessing.Pool(tasks) as pool:
+                    pool.starmap(self.postprocessing_single_run, enumerate(dir_list))
+
+        self.get_results()
+
+    def postprocessing_single_run(self, i: int, dir: str):
+        """
+        Internal function used for parallel processing of post-processing in the method "run_postprocessing_parallel)
+        Performs the actual post-processing tasks
+
+        Args:
+            i (int): n from enumerate
+            dir (str): directory to work in 
+        """
+        with set_directory(dir):
+            #Checking for finished runs.
+            self.run_finished, NOMD = check_finished(self.config)
+            if self.run_finished == True:
+                logger.info(f"Run in {dir} finished.")
             else:
-                    pdir_list.append(f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}")
-            #actual loop over stat dirs
-            for pdir in pdir_list:
-                    with set_directory(f"{pdir}"):
-                        dir_list = glob(f"{pdir}/{self.config['system']['output_dir_name']}_*/")
-                        #single point calculation folders.
-                        for i, dir in enumerate(dir_list):
-                                with set_directory(dir):
-                                    #Checking for finished runs.
-                                    self.run_finished, NOMD = check_finished(self.config)
-                                    if self.run_finished == True:
-                                        logger.info(f"Run in {dir} finished.")
-                                    else:
-                                        logger.info(f"Run in {dir} unfinished.")
-                                    #rmsd & ene ana
-                                    self.offsets_sp(i)
-                                    self.create_ana_dir()
-                                    self.run_ene_ana()
-                                    self.create_rmsd_dir()
-                                    self.run_rmsd()
-                    #writing output                    
-                    self.create_output_dir()
+                logger.info(f"Run in {dir} unfinished.")
+            #rmsd & ene ana
+            self.offsets_sp(i)
+            self.create_ana_dir()
+            self.run_ene_ana()
+            self.create_rmsd_dir()
+            self.run_rmsd()
+
+    def get_results(self):
+        # loops through folders and only gets the results from the outputs
+        # fraction_list, dF_list, rmsd_list, energy_runs
+        pdir_list = []
+        stat_run_path = f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}"[:-1]
+        starting_number = int(f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}"[-1:])
+        #For statistical run
+        if int(self.config['simulation']['NSTATS']) > 1: 
+                for i in range(starting_number, self.config['simulation']['NSTATS'] + 1):
+                        pdir_list.append(f"{stat_run_path}{i}")
+                        pdir_list.sort(key=natural_keys)
+        else:
+                pdir_list.append(f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}")
+
+        for pdir in tqdm(pdir_list):
+            with set_directory(pdir):
+                dir_list = glob(f"{pdir}/{self.config['system']['output_dir_name']}_*/")
+                for n, dir in tqdm(enumerate(dir_list), desc="subdir", total=len(dir_list)):
+                    with set_directory(dir+"/ene_ana"):
+                        #logger.info(f"processing {dir}")
+                        df = self.read_df('./df.out')
+                        self.dF_list.append(df)
+                        self.offsets_sp(n)
+                        samples = sampling(self.config, self.offsets, df)
+                        fractions, energies = samples.main()
+                        self.fraction_list.append(fractions)
+                        self.energy_runs.append(energies)
+                    with set_directory(dir+"/rmsd"):
+                        self.rmsd_list.append(self.read_rmsd('rmsd.out'))
+
+                self.create_output_dir()

@@ -157,7 +157,7 @@ def write_prob_sampling(prob_outfile, prob_state, itime, step):
 class sampling():
     def __init__(self, config, offsets, dfs):
         self.boltzman = 0.00831441
-        self.OFFSETS = [0] + offsets
+        self.OFFSETS = offsets
         self.FREE = dfs
         self.config = config
         self.temp = self.config['simulation']['parameters']['temp']
@@ -186,6 +186,8 @@ class sampling():
         enes = np.array([], dtype=np.float64)
         reference = self.read_energy_file(self.REFERENCE)
         vmix = self.read_energy_file(self.VMIX)
+        if len(endstates_e) != len(self.OFFSETS):
+            raise ValueError("endstates_e and self.OFFSETS must have the same length")
         #compute the energies for each endstate
         for i,hi in enumerate(endstates_e):
             #compute exponential term
@@ -224,7 +226,7 @@ class sampling():
             """print("Endstates    %s\t\t%s\t\t%s\t\t%s\t\t%s\t\t%s" % (i, round(contributions[i],2), round(contributions[i]*100/tot_con,2), 
                                                             lowest_energy[i], round(lowest_energy[i]*100/tot_con_2,2),
                                                             dG_diff[i]))"""
-            fractions.append(lowest_energy[i]/tot_con_2)
+            fractions.append(contributions[i]/tot_con_2)
         energies = [vmix,reference] +  endstates_e    
         return fractions, energies
 
