@@ -186,6 +186,8 @@ class sampling():
         enes = np.array([], dtype=np.float64)
         reference = self.read_energy_file(self.REFERENCE)
         vmix = self.read_energy_file(self.VMIX)
+        if len(endstates_e) != len(self.OFFSETS):
+            raise ValueError("endstates_e and self.OFFSETS must have the same length")
         #compute the energies for each endstate
         for i,hi in enumerate(endstates_e):
             #compute exponential term

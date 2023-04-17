@@ -41,7 +41,7 @@ def offset_steps(EIR_start,EIR_range,EIR_step_size,EIR_groups,cpAEDS_type):
     n_offsets = len(offsets[EIR_groups[-1][-1]])
     for i,lst in enumerate(offsets):
         if len(lst) == 0:
-            offsets[i] = [0] * n_offsets
+            offsets[i] = [EIR_start[i]] * n_offsets
     return offsets
 
 def pKa_from_df(df,temp):
