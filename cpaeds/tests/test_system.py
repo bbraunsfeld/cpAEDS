@@ -56,6 +56,7 @@ def test_folder_structure():
         path = os.getcwd()
         settings = load_config_yaml(
             config= f'{path}/cpaeds/tests/test_data/test_settings.yaml')
+        settings['system']['system_dir']= os.path.abspath(os.path.join(os.path.dirname(__file__), f"test_data/example_system"))
     
         system = SetupSystem(settings)
         system.run_checks()
@@ -63,12 +64,14 @@ def test_folder_structure():
 
         with set_directory(f'{path}/cpaeds/tests/test_data/example_system/'):            
                 shutil.rmtree('./aeds')
+                pass
 
 def test_cpAEDS_type_2():
         """Sample test, will pass so long as all inputs are given in settings.yaml."""
         path = os.getcwd()
         settings = load_config_yaml(
             config= f'{path}/cpaeds/tests/test_data/test_settings_offsets.yaml')
+        settings['system']['system_dir']= os.path.abspath(os.path.join(os.path.dirname(__file__), f"test_data/example_system"))
     
         system = SetupSystem(settings)
         system.run_checks()
@@ -76,3 +79,4 @@ def test_cpAEDS_type_2():
 
         with set_directory(f'{path}/cpaeds/tests/test_data/example_system/'):            
                 shutil.rmtree('./aeds')
+                pass

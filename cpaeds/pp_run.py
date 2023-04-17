@@ -162,8 +162,9 @@ def main():
                                 else:
                                         pass
 
-                for offset in  settings_loaded['simulation']['parameters']['EIR_list']:    
-                        pka_offset_list.append(pKa_from_df(offset,int(settings_loaded['simulation']['parameters']['temp'])))
+                #for offset in  settings_loaded['simulation']['parameters']['EIR_list']:   
+                        #doesnot take offset as list 
+                        #pka_offset_list.append(pKa_from_df(offset,int(settings_loaded['simulation']['parameters']['temp'])))
                 os.chdir(f"{pdir}")
                 try:
                         os.mkdir('results')

@@ -1,5 +1,138 @@
 import datetime
 import os
+import re
+
+class Block:
+    '''
+    TODO: add a translation layer, translating value names to indices in the corresponding blocks.
+    Stores an imd block and can be used to change values in the block.
+    '''
+
+    def __init__(self, blockname: str, contentRaw: str) -> None:
+        self.blockname = blockname
+        self.content = list()
+        self.isComment = list()
+
+        # Parses the imd block and puts it into the content list, and finds out if it the line was a comment or not.
+        for l in contentRaw.split('\n'):
+
+            if re.match("^#", l) or l == "" or self.blockname == "TITLE":
+                self.isComment.append(True)
+                self.content.append([l])
+            else:
+                self.isComment.append(False)
+                self.content.append(l.split())
+
+    def __repr__(self) -> str:
+        return self.getBlock()
+
+    def changeValueByIndex(self, index: int, value):
+        '''
+        Changes a value in the block to the given value
+        index: the index of the value to be changed. Counting starts with 0 at the beginning of each block.
+        value: the new value the value at the given position should be changed to
+
+        Retruns None
+        '''
+
+        i = 0
+        for nOuter, (line, cmnt) in enumerate(zip(self.content, self.isComment)):
+            if not cmnt:
+                for nInner, oldValue in enumerate(line):
+                    if i == index:
+                        self.content[nOuter][nInner] = str(value)
+                        return None
+                    i += 1
+        
+        raise IndexError(f"Index {index} in block {self.blockname} is out of bounds. Check positions.")
+        
+
+    def getBlock(self) -> str:
+        # Returns a (more or less) neatly formatted block.
+        blockout = self.blockname + "\n"
+
+        for contentOuter in self.content:
+            for inner in contentOuter:
+                blockout += inner + "\t"
+            blockout += "\n"
+
+        blockout = blockout[:-2]
+        blockout += "END\n"
+        return blockout
+
+class IMDFile:
+    ''' 
+    Holds the content of an IMD file and allows for manipulation
+    '''
+
+    def __init__(self, inFile: str) -> None:
+
+        dictFile = os.path.abspath(os.path.join(os.path.dirname(__file__), f"data/IMDNames.lib"))
+        aedsTemplate = os.path.abspath(os.path.join(os.path.dirname(__file__), f"data/AEDS.template"))
+
+        self.blocks = dict() # Holds the blocks with the blockname as key and the content as Block object
+        self.valueIndices = dict() # Holds the positions and names of values. This needs to be hardcoded. TODO: change it over to a library file?
+
+        # Read blocks from file
+        self.readBlocksFromFile(inFile)
+
+        if not ('AEDS' in self.blocks.keys()):
+            # Adds an AEDS block from aeds.template
+            self.readBlocksFromFile(aedsTemplate)
+
+        with open(dictFile, "r") as f:
+            for l in f:
+                if not re.match("^#", l):
+                    name, block, index = l.strip().split(",")
+                    self.valueIndices[name] = [block, int(index)]
+
+        return None
+
+    def readBlocksFromFile(self, inFile):
+        with open(inFile, "r") as f:
+            line = f.readline()
+            while line:
+                # Iterate over all lines, if a new block was found by the regex, the name and content is stored.
+
+                if re.match("^[A-Z]+\n", line):
+                    if not re.match("^END\n", line):
+                        currentBlock = line.strip()
+                        tempContent = str()
+                    else:
+                        self.blocks[currentBlock] = Block(currentBlock, tempContent) 
+                else:
+                     if not re.match("^END", line): tempContent += line
+
+                line = f.readline()
+            # Need this to add the last block if there is no newline after the last END
+            # If there is a newline, it has no consequences.
+            self.blocks[currentBlock] = Block(currentBlock, tempContent)
+
+    def __repr__(self):
+        return "".join(self.getIMDforAEDS())
+
+    def changeValueByIndex(self, blockname: str, index: int, value):
+        self.blocks[blockname].changeValueByIndex(index, value)
+
+    
+    def changeValueByName(self, ValueName: str, value) -> None:
+        ''' 
+        Changes an value by the given name accoring to GROMOS Volume XX
+        Currently only works for few named values.
+        '''
+        self.changeValueByIndex(*self.valueIndices[ValueName], value)
+
+        return None
+
+    def getIMDforAEDS(self) -> list:
+        #Returns all block except the block "POSITIONRES" as a list of lines. Entries contain \n.
+        out = [block.getBlock() for block in self.blocks.values() if not block.blockname == 'POSITIONRES']
+        return out
+
+    def writeIMDforAEDS(self, dest) -> None:
+        with open(dest, "w") as f:
+            f.writelines(self.getIMDforAEDS())
+
 
 def build_mk_script_file(settings_loaded,dir_path):
     name = settings_loaded['system']['name']
@@ -60,36 +193,12 @@ job_id NTIAEDSS subdir run_after
                 body += f"END"
         return body
 
-def scrap_ref_imd(settings_loaded):
-    ref_imd_path = f"{settings_loaded['system']['md_dir']}/{settings_loaded['system']['ref_imd']}"
-    flag = 0
-    temp_flag = 0
-    body_1 =f""
-    body_2 =f""
-    with open(ref_imd_path, 'r') as file:
-        for line in file:
-            if f"SYSTEM" in line:
-                flag = 1
-            elif f"STEP" in line:
-                flag = 0
-            if flag == 1:
-                body_1 += f"{line}"
-            if f"BOUNDCOND" in line:
-                flag = 2
-            elif f"INITIALISE" in line:
-                flag = 0
-            if flag == 2:
-                body_2 += f"{line}"
-            if temp_flag == 3:
-                temp_flag = 0
-                settings_loaded['simulation']['parameters']['temp'] = int(line.split()[0])
-            if f"TEMP0(1 ... NBATHS)" in line:
-                temp_flag = 3
-    return body_1,body_2
                     
 def build_imd_file(settings_loaded,EIR,rs):
-    date = datetime.date.today()
-    NSTATES = settings_loaded['simulation']['NSTATES']
+
+    ref_imd_path = f"{settings_loaded['system']['md_dir']}/{settings_loaded['system']['ref_imd']}"
+
+    NUMSTATES = settings_loaded['simulation']['NSTATES']
     NSTLIM = settings_loaded['simulation']['parameters']['NSTLIM']
     NTPR = settings_loaded['simulation']['parameters']['NTPR']
     NTWX = settings_loaded['simulation']['parameters']['NTWX']
@@ -97,72 +206,36 @@ def build_imd_file(settings_loaded,EIR,rs):
     dt = settings_loaded['simulation']['parameters']['dt']
     EMIN = settings_loaded['simulation']['parameters']['EMIN']
     EMAX = settings_loaded['simulation']['parameters']['EMAX']
+
+    imd = IMDFile(ref_imd_path)
+    imd.changeValueByName('NUMSTATES', NUMSTATES)
+    imd.changeValueByName('NSTLIM', NSTLIM)
+    imd.changeValueByName('NTPR', NTPR)
+    imd.changeValueByName('NTWX', NTWX)
+    imd.changeValueByName('NTWE', NTWE)
+    imd.changeValueByName('dt', dt)
+    imd.changeValueByName('EMIN', EMIN)
+    imd.changeValueByName('EMAX', EMAX)
+    imd.changeValueByName('EIR', '\t'.join(str(i) for i in EIR)) #loops over elements in EIR (list of offsets at the same level) 
+    imd.changeValueByName('T', 0)
+
     if settings_loaded['system']['lib_type'] == f"cuda":
         ALPHLJ='0'  
         ALPHCRF='0'
     elif settings_loaded['system']['lib_type'] == f"cuda_local":
         ALPHLJ=''  
         ALPHCRF=''
-    rnd_seed = 210184 + rs
-    b1,b2=scrap_ref_imd(settings_loaded)
-    body = f"""TITLE
-	Automatically generated input file
-	bbraun {date}
-END
-{b1}STEP
-#   NSTLIM         T        DT
-   {NSTLIM}        0       {dt}
-END
-{b2}
-INITIALISE
-# Default values for NTI values: 0
-#   NTIVEL    NTISHK    NTINHT    NTINHB
-         0         0         0         0
-#   NTISHI    NTIRTC    NTICOM
-         1         0         0
-#   NTISTI
-         0
-#       IG     TEMPI
-  {rnd_seed}     300
-END
-COMTRANSROT
-#     NSCM
-      1000
-END
-PRINTOUT
-#NTPR: print out energies, etc. every NTPR steps
-#NTPP: =1 perform dihedral angle transition monitoring
-#     NTPR      NTPP
-     {NTPR}        0
-END
-WRITETRAJ
-#    NTWX     NTWSE      NTWV      NTWF      NTWE      NTWG      NTWB
-    {NTWX}        0         0         0     {NTWE}        0         0
-END
-AEDS
-#     AEDS
-         1
-#   ALPHLJ   ALPHCRF      FORM      NUMSTATES
-    {ALPHLJ} {ALPHCRF}       1      {NSTATES}
-#     EMAX      EMIN
-    {EMAX}    {EMIN}
-# EIR [1..NUMSTATES]
-         0      {EIR}
-# NTIAEDSS  RESTREMIN  BMAXTYPE      BMAX    ASTEPS    BSTEPS
-         1          1         2         2       500     10000
-END"""
 
-    if settings_loaded['system']['lib_type'] == f"cuda" or settings_loaded['system']['lib_type'] == f"cuda_local":
-        body += F"""
-INNERLOOP
-#     NTILM      NTILS      NGPUS      NDEVG
-         4         0         1         0
-END"""
-    return body
+    imd.changeValueByName('ALPHLJ', ALPHLJ)
+    imd.changeValueByName('ALPHCRF', ALPHCRF)
+
+    return "".join(imd.getIMDforAEDS())
+    
 
 def build_ene_ana(settings_loaded,NRUN):
     dir_path = os.getcwd()
     name = settings_loaded['system']['name']
+    nstates = settings_loaded['simulation']['NSTATES']
     topo = os.path.relpath(settings_loaded['system']['topo_file'], dir_path)
     equilibrate= settings_loaded['simulation']['equilibrate']
     if equilibrate[0] == True:
@@ -171,9 +244,10 @@ def build_ene_ana(settings_loaded,NRUN):
     else:
         start = 1
     NRUN = NRUN + 1
-
-    body = f"""@prop eds_vr e1 e2 e1s e2s e1r e2r eds_emin eds_emax eds_vmix eds_globmin eds_globminfluc
-@topo {topo}
+    header = f"""@prop eds_vr eds_emin eds_emax eds_vmix eds_globmin eds_globminfluc """
+    for i in range(nstates):
+        header += f"e{i+1} e{i+1}s "
+    body = header + f"""\n@topo {topo}
 @library ene_ana.md++.lib
 @en_files
 """
@@ -204,17 +278,44 @@ def build_rmsd(settings_loaded, NRUN):
 
 def build_dfmult_file(settings_loaded):
     temp = settings_loaded['simulation']['parameters']['temp']
+    endstates = f"""@endstates """
+    for i in range(settings_loaded['simulation']['NSTATES']):
+        endstates += f"e{i+1}.dat "
     body = f"""
 @temp {temp}
 @stateR eds_vr.dat
-@endstates e1.dat e2.dat"""
+{endstates}"""
     return body
 
-def build_output(settings_loaded,fractions,dG,rmsd):
+def build_output(settings_loaded,fractions,dF,rmsd):
     offsets = settings_loaded['simulation']['parameters']['EIR_list']
-    n= len(offsets)
-    body = f"""#RUN,OFFSET,FRACTION1,FRACTION2,dG,rmsd\n"""
+    n= len(offsets[0])
+    header = f"""#RUN,"""
+    offset_header = f""""""
+    fraction_header = f""""""
+    dF_header = f""""""
+
+    for i in range(settings_loaded['simulation']['NSTATES']):
+        offset_header += f"OFFSET{i+1},"
+        fraction_header += f"FRACTION{i+1},"
+        dF_header += f"dF{i+1},"
+
+    header = header + offset_header + fraction_header + dF_header + f"rmsd\n"
+    body = f""""""
 
     for i in range(1,n+1,1):
-            body += f"{i},{offsets[i-1]},{fractions[i-1][0]},{fractions[i-1][1]},{dG[i-1]},{rmsd[i-1]}\n"
-    return body
+            if len(settings_loaded['simulation']['parameters']['EIR_start']) == settings_loaded['simulation']['NSTATES']:
+                body += f"{i},"
+            else:
+                body += f"{i},0,"
+
+            for j in offsets:
+                body += f"{j[i-1]},"
+            for j in fractions[i-1]:
+                body += f"{j},"
+            for j in dF[i-1]:
+                body += f"{j},"
+            body += f"{rmsd[i-1]}\n"
+    file = header + body        
+    return file
+

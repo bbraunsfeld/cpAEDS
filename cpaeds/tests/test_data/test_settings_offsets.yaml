@@ -3,7 +3,7 @@
 system:
 ################
   name: 'example_system'
-  system_dir: '/home/bbraun/cpAEDS/cpaeds/tests/test_data/example_system'
+  system_dir: ''
   md_dir: '/home/bbraun/cpAEDS/cpaeds/tests/test_data/example_system/md_propionic_acid/'
   output_dir_name: 'example_output'
   topo_file: '/home/bbraun/cpAEDS/cpaeds/tests/test_data/example_system/topo/propionic_acid_54a8_pH.top'
