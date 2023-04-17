@@ -12,6 +12,7 @@ dependencies:
   - seaborn
   - statsmodels
   - scipy
+  - tqdm
     # Testing
   - pytest
   - pytest-cov
