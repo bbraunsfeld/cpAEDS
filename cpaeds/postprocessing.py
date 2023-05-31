@@ -29,7 +29,7 @@ class postprocessing(object):
         self.energy_map = self.initialise_energy_map()
         self.energy_runs = []
 
-    def create_ana_dir(self):
+    def create_ana_dir(self, NOMD):
         """
         Creates a folder (ene_ana) with the argument files for gromos++ ene_ana and dfmult.
         """
@@ -40,12 +40,12 @@ class postprocessing(object):
         parent = os.getcwd()
         with set_directory(f"{parent}/ene_ana"):
             copy_lib_file(f"{parent}/ene_ana",'ene_ana.md++.lib')
-            ene_ana_body =  build_ene_ana(self.config,self.config['simulation']['parameters']['NRUN'])
+            ene_ana_body =  build_ene_ana(self.config,NOMD)
             write_file2(ene_ana_body,'ene_ana.arg')
             df_file_body = build_dfmult_file(self.config)
             write_file2(df_file_body,'df.arg')
 
-    def create_rmsd_dir(self):
+    def create_rmsd_dir(self, NOMD):
         """
         Creates a folder (rmsd) with the argument file for gromos++ rmsd.
         """
@@ -55,7 +55,7 @@ class postprocessing(object):
             pass
         parent = os.getcwd()
         with set_directory(f"{parent}/rmsd"):
-            rmsd_body = build_rmsd(self.config,self.config['simulation']['parameters']['NRUN'])
+            rmsd_body = build_rmsd(self.config,NOMD)
             write_file2(rmsd_body,'rmsd.arg')
 
     def create_output_dir(self):
@@ -223,9 +223,9 @@ class postprocessing(object):
                                         logger.info(f"Run in {dir} unfinished.")
                                     #rmsd & ene ana
                                     self.offsets_sp(i)
-                                    self.create_ana_dir()
+                                    self.create_ana_dir(NOMD=NOMD)
                                     self.run_ene_ana()
-                                    self.create_rmsd_dir()
+                                    self.create_rmsd_dir(NOMD=NOMD)
                                     self.run_rmsd()
                     #writing output                    
                     self.create_output_dir()
