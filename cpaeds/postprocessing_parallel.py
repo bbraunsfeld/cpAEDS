@@ -71,7 +71,31 @@ class postprocessing_parallel(object):
         with set_directory(f"{parent}/results"):
             output_body = build_output(self.config,self.fraction_list,self.dF_list,self.rmsd_list)
             write_file2(output_body,'results.out')
-            np.save('energies.npy', np.array(self.energy_runs), allow_pickle=False)
+            harmonizedEnergyArray = self.harmonizeEnergyArray(self.energy_runs)
+            np.save('energies.npy', harmonizedEnergyArray, allow_pickle=False)
+
+    def harmonizeEnergyArray(self, l: list):
+        """
+        Harmonizes the length of a given list of lists containing energies by padding the 3rd dimension of the list with np.nan.
+
+        This is needed to use np.save on unfinished runs if there are some runs which are more finished than others.
+
+        Args:
+            l (list): list of lists with three dimensions: (runs, states, energies)
+        """
+
+        array_list = []
+
+        for run in l:
+            array_list.append(np.array(run))
+
+        maxLen = max([len(a[-1]) for a in array_list])
+
+        for i, run in enumerate(array_list):
+            paddedArray = np.pad(run, [(0,0), (0, maxLen - len(run[0]))], 'constant', constant_values=np.nan)
+            array_list[i] = paddedArray
+
+        return np.array(array_list)
 
     def initialise_energy_map(self):
         """
