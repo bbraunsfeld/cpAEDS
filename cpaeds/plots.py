@@ -63,12 +63,16 @@ class StdPlot(Plot):
         fractions = df.loc[:, df.columns.str.startswith('FRACTION')]
         return fractions.iloc[:, states]
     
-    def offset_fraction(self, ax=None, refstate: int = -1):
+    def offset_fraction(self, ax=None, refstate: int = -1, plotArgs:dict = {}, colors:list = None):
         """
         Generates a plot with the offset on the x-axis and the fraction of the states on the y-axis.
         If there is only two states, it will only plot the fraction of the first state (assuming that fraction(1) + fraction(2) = 1)
 
         Args:
+            ax (matplotlib subplots ax, optional): Ax to plot on. If left empty, a standalone plot will be created
+            refstate (int, optional): The state to get the offset values from
+            plotArgs (dictionary, optional): Additional arguments to pass along to plt.plot (e.g. marker, color,...)
+            colors (list, optional): A list of colors to be used for the states. If there is only two fractions, the length should be 1, otherwise it should be the same length as the number of fractions.
         """
         x = self.getOffset(refstate)
         ys = self.getFractions()
@@ -79,10 +83,17 @@ class StdPlot(Plot):
             fig, ax = plt.subplots(1,1, dpi=200)
 
         if len(ys.columns) > 2:
-            for y in ys:
-                ax.scatter(x, ys[y], label=y)        
+            if colors is None:
+                for y in ys:
+                    ax.scatter(x, ys[y], label=y, **plotArgs)        
+            else:
+                for c, y in zip(colors, ys):
+                    ax.scatter(x, ys[y], label=y, c=c, **plotArgs)        
         else:
-            ax.scatter(x,ys['FRACTION1'].values, label='FRACTION1')
+            if colors is None:
+                ax.scatter(x,ys['FRACTION1'].values, label='FRACTION1', **plotArgs)
+            else:
+                ax.scatter(x,ys['FRACTION1'].values, label='FRACTION1', c=colors[0], **plotArgs)
 
         ax.legend()
         ax.set_ylabel(f"Fraction of time")
@@ -92,21 +103,25 @@ class StdPlot(Plot):
             plt.savefig("offset_fraction.png")
         gc.collect()
 
-    def offset_pH(self, state: int = -1, offset_state: int = -1, ax = None, linfit_subset: list = [0,-1]):
+    def offset_pH(self, state: int = -1, offset_state: int = -1, ax = None, linfit_subset: list = [0,-1], ref_is_protonated: bool = False, plotArgs: dict = {}, colors: list = None, plotArgsTrend: dict = {}):
         """
         Generates a plot with the offset on the x-axis and the computed pH (from the pKa) on the y-axis.
-        If no state is given, then the last state is assumed to be the fully deprotonated state.
-        Currently only works for molecules with a single deprotonated state.
+        If no state is given, then the last state is assumed to be reference state. By default, the reference state is the fully deprotonated one.
 
         Args:
-        state: int, index of state of the fully deprotonated form.
+        state: int, index of state of the reference state for the calculation of the theoretical pH. By default this is the fully deprotonated form. Defaults to -1
+        offset_state (int, optional): state to take the offset from. Defaults to -1
         linfit_subset: list, can be used to subset the datapoints used for the linear fit. Defaults to all datapoints (from 0 to -1)
+        ref_is_protonated (bool, optional): indicates wether the offset state is the protonated or deprotonated state. Defaults to False (state is deprotonated)
+        plotArgs (dictionary, optional): Additional arguments to pass along to the plotting of the points (e.g. marker)
+        plotArgsTrend (dictionary, optional): Additional arguments to pass along to the plotting of the trend lines (e.g. marker)
+        colors (list, optional): list of colors for points, LogFit, linearFit
         """
 
         x = self.getOffset(offset_state)
         fractions = self.getFractions(states=state)
 
-        pH = self.ph_curve_deprot(self.pka, fractions)
+        pH = self.ph_curve_deprot(self.pka, (1 - fractions) if ref_is_protonated else fractions )
 
         # Fitting to the data
         x_subset = x[linfit_subset[0]:linfit_subset[1]]
@@ -122,9 +137,9 @@ class StdPlot(Plot):
             fig, ax = plt.subplots(1,1, dpi=200)
 
         plotpoints = np.linspace(x.min(), x.max())
-        ax.plot(plotpoints, logistic_curve(plotpoints, *self.logfit))
-        ax.plot(x, self.linfit.intercept + x * self.linfit.slope)
-        ax.scatter(x, pH)
+        ax.plot(plotpoints, logistic_curve(plotpoints, *self.logfit), **({} if colors is None else {'c': colors[1]}), **plotArgsTrend)
+        ax.plot(x, self.linfit.intercept + x * self.linfit.slope, **({} if colors is None else {'c': colors[2]}), **plotArgsTrend)
+        ax.scatter(x, pH, **({} if colors is None else {'c': colors[0]}), **plotArgs)
         ax.set_ylabel("theoretical pH")
         ax.set_xlabel("Offset [kJ/mol]")
         ax.axhline(self.pka, color="gray", linewidth=0.5)
