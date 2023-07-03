@@ -144,6 +144,8 @@ def build_mk_script_file(settings_loaded,dir_path):
     version = settings_loaded['system']['version']
     if settings_loaded['system']['lib_type'] == f"cuda":
         lib = f'mk_script_cuda_8_slurm.lib'
+    elif settings_loaded['system']['lib_type'] == f"cuda_new":
+        lib = f'mk_script_cuda_8_slurm.lib'
     elif settings_loaded['system']['lib_type'] == f"cuda_local":
         lib=f'mk_script_cuda_8.lib'
     body = f"""@sys            aeds_{name}
@@ -222,6 +224,9 @@ def build_imd_file(settings_loaded,EIR,rs):
     if settings_loaded['system']['lib_type'] == f"cuda":
         ALPHLJ='0'  
         ALPHCRF='0'
+    elif settings_loaded['system']['lib_type'] == f"cuda_new":
+        ALPHLJ=''  
+        ALPHCRF=''
     elif settings_loaded['system']['lib_type'] == f"cuda_local":
         ALPHLJ=''  
         ALPHCRF=''

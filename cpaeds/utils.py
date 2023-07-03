@@ -80,11 +80,15 @@ def copy_lib_file(destination,name):
     else:
         shutil.copyfile(path, f"{destination}/{name}")
 
-def write_file(input_string,name) -> str:
+def write_file(input_string,name,overwrite) -> str:
     check_file = Path(f"{os.getcwd()}/{name}")
-    if os.path.exists(check_file):
+    if os.path.exists(check_file) and overwrite == False:
         logger.info(f"{name} exists in {os.getcwd()}.")
         pass
+    elif os.path.exists(check_file) and overwrite == True:
+        with open(check_file,'w+') as file:
+            file.write(input_string)
+        logger.info(f"{name} overwritten in {os.getcwd()}.")
     else:
         with open(check_file,'w+') as file:
             file.write(input_string)

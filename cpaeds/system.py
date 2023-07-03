@@ -34,6 +34,14 @@ class SetupSystem(object):
         self.sys_dir: str = self.config['system']['system_dir']
         self.dir_list = None
 
+    def __check_overwrite(self):
+        if 'overwrite' in self.config['system']:
+            if self.config['system']['overwrite'] == True:
+                self.overwrite = True
+                logger.info(f"Overwritting cpAEDS files")  
+        else:
+            self.overwrite = False
+
     def __check_engines(self):
         """
         Checking for a path given towards md binary.
@@ -214,6 +222,7 @@ class SetupSystem(object):
             sys.exit(f"Error missing simulation parameter.")
 
     def run_checks(self):
+        self.__check_overwrite()
         self.__check_engines()
         self.__check_input_settings()
         #self.__check_system_dir()
@@ -263,21 +272,35 @@ class SetupSystem(object):
                     with set_directory(f"{pdir}/{dir}"):
                         if self.config['system']['lib_type'] == f"cuda":
                             copy_lib_file(os.getcwd(),'mk_script_cuda_8_slurm.lib')
+                        elif self.config['system']['lib_type'] == f"cuda_new":
+                            copy_lib_file(os.getcwd(),'mk_script_cuda_8_slurm.lib')
                         elif self.config['system']['lib_type'] == f"cuda_local":
                             copy_lib_file(os.getcwd(),'mk_script_cuda_8.lib')
                         mk_script_body =  build_mk_script_file(self.config,os.getcwd())
-                        write_file(mk_script_body,'aeds_mk_script.arg')
+                        write_file(mk_script_body,'aeds_mk_script.arg',self.overwrite)
                         job_file_body = build_job_file(self.config)
-                        write_file(job_file_body,'aeds.job')
+                        write_file(job_file_body,'aeds.job',self.overwrite)
                         ### parses list of EIRS on same level
                         EIR = [item[eir_counter] for item in self.config['simulation']['parameters']['EIR_list']]
                         logger.info(f"EIR parsed to build_imd {EIR}.")
                         imd_file_body = build_imd_file(self.config,EIR,random_seed) 
-                        write_file(imd_file_body,'aeds.imd')
+                        write_file(imd_file_body,'aeds.imd',self.overwrite)
 
-                        if os.path.exists(f"{pdir}/{dir}/aeds_{self.config['system']['name']}_1.imd"):
+                        if os.path.exists(f"{pdir}/{dir}/aeds_{self.config['system']['name']}_1.imd") and self.overwrite == False:
+                            logger.debug(f"overwrite flag {self.overwrite}")
                             logger.info(f"imd and run files exist")
                             pass
+                        elif os.path.exists(f"{pdir}/{dir}/aeds_{self.config['system']['name']}_1.imd") and self.overwrite == True:
+                            logger.info(f'OVERWRITTING')
+                            logger.info(f'Running mk_script...')
+                            exe = subprocess.run(
+                                [self.config['system']['path_to_mk_script'], '@f', 'aeds_mk_script.arg'],
+                                check=True,
+                                capture_output=True,
+                                text=True
+                            )
+                            exe.check_returncode()
+                            logger.info(f'Finished running mk_script.')  
                         else:
                             logger.info(f'Running mk_script...')
                             exe = subprocess.run(
