@@ -206,6 +206,7 @@ def build_imd_file(settings_loaded,EIR,rs):
     NTWX = settings_loaded['simulation']['parameters']['NTWX']
     NTWE = settings_loaded['simulation']['parameters']['NTWE']
     dt = settings_loaded['simulation']['parameters']['dt']
+    random_seed = 852383 + rs
     EMIN = settings_loaded['simulation']['parameters']['EMIN']
     EMAX = settings_loaded['simulation']['parameters']['EMAX']
 
@@ -216,6 +217,9 @@ def build_imd_file(settings_loaded,EIR,rs):
     imd.changeValueByName('NTWX', NTWX)
     imd.changeValueByName('NTWE', NTWE)
     imd.changeValueByName('dt', dt)
+    imd.changeValueByName('rnd_seed', random_seed)
+    imd.changeValueByName('NTINHT', 0) #correcting NTINHT from equilibrium
+    imd.changeValueByName('NTISHI', 0) #correcting common mistake from tutorial
     imd.changeValueByName('EMIN', EMIN)
     imd.changeValueByName('EMAX', EMAX)
     imd.changeValueByName('EIR', '\t'.join(str(i) for i in EIR)) #loops over elements in EIR (list of offsets at the same level) 
