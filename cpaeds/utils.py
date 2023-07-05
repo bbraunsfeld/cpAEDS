@@ -73,12 +73,17 @@ def check_finished(settings_loaded):
 
     return run_complete, len(omd_list)
 
-def copy_lib_file(destination,name):
-    path = os.path.abspath(os.path.join(os.path.dirname(__file__), f"data/{name}"))
-    if os.path.exists(f"{destination}/{name}"):
+def copy_lib_file(destination,lib_name,version,overwrite):
+    lib_name = f"ene_ana.md++.lib"
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), f"data/{version}.lib"))
+    if os.path.exists(f"{destination}/{lib_name}") and overwrite == False:
+        logger.info(f"{lib_name} exists in {os.getcwd()}.")
         pass
+    elif os.path.exists(f"{destination}/{lib_name}") and overwrite == True:
+        shutil.copyfile(path, f"{destination}/{lib_name}")
+        logger.info(f"{lib_name} overwritten in {os.getcwd()}.")
     else:
-        shutil.copyfile(path, f"{destination}/{name}")
+        shutil.copyfile(path, f"{destination}/{lib_name}")
 
 def write_file(input_string,name,overwrite) -> str:
     check_file = Path(f"{os.getcwd()}/{name}")

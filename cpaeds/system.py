@@ -271,11 +271,11 @@ class SetupSystem(object):
                 for dir in tqdm(dir_list):
                     with set_directory(f"{pdir}/{dir}"):
                         if self.config['system']['lib_type'] == f"cuda":
-                            copy_lib_file(os.getcwd(),'mk_script_cuda_8_slurm.lib')
+                            copy_lib_file(os.getcwd(),'mk_script_cuda_8_slurm.lib','mk_script_cuda_8_slurm',self.overwrite)
                         elif self.config['system']['lib_type'] == f"cuda_new":
-                            copy_lib_file(os.getcwd(),'mk_script_cuda_8_slurm.lib')
+                            copy_lib_file(os.getcwd(),'mk_script_cuda_8_slurm.lib','mk_script_cuda_8_slurm',self.overwrite)
                         elif self.config['system']['lib_type'] == f"cuda_local":
-                            copy_lib_file(os.getcwd(),'mk_script_cuda_8.lib')
+                            copy_lib_file(os.getcwd(),'mk_script_cuda_8.lib','mk_script_cuda_8',self.overwrite)
                         mk_script_body =  build_mk_script_file(self.config,os.getcwd())
                         write_file(mk_script_body,'aeds_mk_script.arg',self.overwrite)
                         job_file_body = build_job_file(self.config)
