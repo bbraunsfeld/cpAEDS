@@ -39,6 +39,8 @@ class SetupSystem(object):
             if self.config['system']['overwrite'] == True:
                 self.overwrite = True
                 logger.info(f"Overwritting cpAEDS files")  
+            else:
+                self.overwrite = False
         else:
             self.overwrite = False
 
@@ -223,6 +225,7 @@ class SetupSystem(object):
 
     def run_checks(self):
         self.__check_overwrite()
+        print(self.overwrite)
         self.__check_engines()
         self.__check_input_settings()
         #self.__check_system_dir()
@@ -270,6 +273,7 @@ class SetupSystem(object):
                 eir_counter = 0
                 for dir in tqdm(dir_list):
                     with set_directory(f"{pdir}/{dir}"):
+                        print(self.overwrite)
                         if self.config['system']['lib_type'] == f"cuda":
                             copy_lib_file(os.getcwd(),'mk_script_cuda_8_slurm.lib','mk_script_cuda_8_slurm',self.overwrite)
                         elif self.config['system']['lib_type'] == f"cuda_new":
