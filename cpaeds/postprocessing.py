@@ -28,6 +28,7 @@ class postprocessing(object):
         self.rmsd_list = []
         self.energy_map = self.initialise_energy_map()
         self.energy_runs = []
+        self.accum_runs = []
 
     def create_ana_dir(self, NOMD):
         """
@@ -143,12 +144,11 @@ class postprocessing(object):
             df = self.read_df(f'./df.out')
             self.dF_list.append(df)
             samples = sampling(self.config,self.offsets,df)
-            fractions, energies = samples.main()
+            fractions, energies, accum = samples.main()
             self.fraction_list.append(fractions)
             self.energy_runs.append(energies)
-            #self.energy_map = self.update_energy_mapping(self.energy_map, energies)
-
-
+            self.accum_runs.append(accum)
+            
     def run_rmsd(self):
         """
         Running gromos++ rmsd in rmsd folder.

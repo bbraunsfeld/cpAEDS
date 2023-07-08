@@ -184,6 +184,7 @@ class sampling():
         endstates_e = [self.read_energy_file(x) for x in endstates_files]
         endstates_totals = np.array([], dtype=np.float64)
         enes = np.array([], dtype=np.float64)
+        accum = np.array([], dtype=np.float64)
         reference = self.read_energy_file(self.REFERENCE)
         vmix = self.read_energy_file(self.VMIX)
         if len(endstates_e) != len(self.OFFSETS):
@@ -207,10 +208,16 @@ class sampling():
         dG_diff = {x:len(np.where((enes[x] - reference) < (self.FREE[x] + (self.temp * self.boltzman)))[0]) for x in range(len(endstates_files))}
         # compute contributions per frame
         for i in range(n_frames):
+            tot_con_acc = 0.0
             final_e = np.sum(endstates_totals[:,i])
             lowest_energy[np.where(endstates_totals[:,i] == np.max(endstates_totals[:,i]))[0][0]] += 1.0
             for j in range(n_states):
                 contributions[j] += endstates_totals[j,i]/final_e
+                tot_con_acc += contributions[j]
+            for j in range(n_states):
+                out = round(contributions[j]*100/tot_con_acc,2)
+                accum = np.append(accum,out)
+        accum = accum.reshape(n_states, n_frames)
         #print results
         tot_con = 0.0
         tot_con_2 = 0.0
@@ -228,5 +235,5 @@ class sampling():
                                                             dG_diff[i]))"""
             fractions.append(contributions[i]/tot_con_2)
         energies = [vmix,reference] +  endstates_e    
-        return fractions, energies
+        return fractions, energies, accum
 
