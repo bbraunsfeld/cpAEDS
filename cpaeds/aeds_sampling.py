@@ -217,7 +217,7 @@ class sampling():
             for j in range(n_states):
                 out = round(contributions[j]*100/tot_con_acc,2)
                 accum = np.append(accum,out)
-        accum = accum.reshape(n_states, n_frames)
+        accum = accum.reshape(n_frames,n_states)
         #print results
         tot_con = 0.0
         tot_con_2 = 0.0

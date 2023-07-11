@@ -29,6 +29,17 @@ class postprocessing(object):
         self.energy_map = self.initialise_energy_map()
         self.energy_runs = []
         self.accum_runs = []
+        self.__check_overwrite()
+
+    def __check_overwrite(self):
+        if 'overwrite' in self.config['system']:
+            if self.config['system']['overwrite'] == True:
+                self.overwrite = True
+                logger.info(f"Overwritting cpAEDS files")  
+            else:
+                self.overwrite = False
+        else:
+            self.overwrite = False
 
     def create_ana_dir(self, NOMD):
         """

@@ -171,7 +171,7 @@ class StdPlot(Plot):
             fig, ax = plt.subplots(1,1, dpi=200)
 
         ax.scatter(x, fractions)
-        ax.set_ylabel("fraction of time")
+        ax.set_ylabel("Fraction of time")
         ax.set_xlabel("Offset [kJ/mol]")
         secxax = ax.secondary_xaxis('top', functions=(offsetToPH, pHToOffset))
         secxax.set_xlabel(secondary_label)

@@ -37,6 +37,8 @@ class postprocessing_parallel(object):
             if self.config['system']['overwrite'] == True:
                 self.overwrite = True
                 logger.info(f"Overwritting cpAEDS files")  
+            else:
+                self.overwrite = False
         else:
             self.overwrite = False
 
