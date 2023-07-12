@@ -8,7 +8,7 @@ import multiprocessing
 from cpaeds.algorithms import natural_keys
 from cpaeds.context_manager import set_directory
 from cpaeds.logger import LoggerFactory
-from cpaeds.file_factory import build_ene_ana, build_rmsd, build_dfmult_file, build_output
+from cpaeds.file_factory import build_ene_ana, build_rmsd, build_dfmult_file, build_output, build_rmsf
 from cpaeds.utils import write_file2, copy_lib_file, check_finished
 from cpaeds.aeds_sampling import sampling
 
@@ -86,7 +86,7 @@ class postprocessing_parallel(object):
             pass
         parent = os.getcwd()
         with set_directory(f"{parent}/rmsf"):
-            rmsf_body = build_rmsd(self.config,NOMD)
+            rmsf_body = build_rmsf(self.config,NOMD)
             write_file2(rmsf_body,'rmsf.arg')
 
     def create_output_dir(self):
