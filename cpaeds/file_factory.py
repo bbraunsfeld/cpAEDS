@@ -265,6 +265,9 @@ def build_ene_ana(settings_loaded,NRUN):
     return body
 
 def build_rmsd(settings_loaded, NRUN):
+    """
+    Creates an rmsd argument file which calculates the rmsd over the first and last run of the simulation with the first frame of the first trajectory as the reference.
+    """
     dir_path = os.getcwd()
     name = settings_loaded['system']['name']
     topo = os.path.relpath(settings_loaded['system']['topo_file'], dir_path)
@@ -280,9 +283,32 @@ def build_rmsd(settings_loaded, NRUN):
 @atomsfit   1:CA,C,N
 @traj
 """
-    
     body += f"../aeds_{name}_{start}.trc.gz\n"
     body += f"../aeds_{name}_{NRUN}.trc.gz\n"
+    return body
+
+def build_rmsf(settings_loaded, NRUN):
+    '''
+    Builds a rmsf argument file with no reference set (will take the firest frame of @traj as reference!)
+    '''
+    dir_path = os.getcwd()
+    name = settings_loaded['system']['name']
+    topo = os.path.relpath(settings_loaded['system']['topo_file'], dir_path)
+    equilibrate = settings_loaded['simulation']['equilibrate']
+    if equilibrate[0] == True: 
+        start = NRUN*(equilibrate[1]/100)
+        start = round(start)
+    else:
+        start = 1
+    body = f"""@topo {topo}
+@pbc r cog
+@atomsrmsf  1:CA
+@atomsfit   1:CA,C,N
+@traj
+"""
+    
+    for i in range(start, NRUN, 1):
+        body += f"../aeds_{name}_{i}.trc.gz\n"
     return body
 
 def build_dfmult_file(settings_loaded):
