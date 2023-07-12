@@ -73,6 +73,22 @@ class postprocessing_parallel(object):
             rmsd_body = build_rmsd(self.config,NOMD)
             write_file2(rmsd_body,'rmsd.arg')
 
+    def create_rmsf_dir(self, NOMD):
+        """
+        creates the rmsf folder and places an rmsf argument file in it.
+
+        Args:
+            NOMD (_type_): Number of finished runs
+        """
+        try:
+            os.mkdir('rmsf')
+        except FileExistsError:
+            pass
+        parent = os.getcwd()
+        with set_directory(f"{parent}/rmsf"):
+            rmsf_body = build_rmsd(self.config,NOMD)
+            write_file2(rmsf_body,'rmsf.arg')
+
     def create_output_dir(self):
         """
         Creates a folder (results) with the collected energies.npy and a results.out in csv-format.
@@ -160,6 +176,18 @@ class postprocessing_parallel(object):
             with open('rmsd.out', 'w') as sp:
                 exe = subprocess.run(
                                     ['rmsd', '@f', 'rmsd.arg'], 
+                                    stdout=sp)
+                exe.check_returncode()
+
+    def run_rmsf(self):
+        """
+        Running gromos++ rmsf in rmsf folder.
+        """
+        parent = os.getcwd()
+        with set_directory(f"{parent}/rmsf"):
+            with open('rmsf.out', 'w') as sp:
+                exe = subprocess.run(
+                                    ['rmsf', '@f', 'rmsf.arg'], 
                                     stdout=sp)
                 exe.check_returncode()
 
@@ -273,6 +301,9 @@ class postprocessing_parallel(object):
             self.run_ene_ana()
             self.create_rmsd_dir(NOMD=NOMD)
             self.run_rmsd()
+            if self.config['simulation']['rmsf'] is True:
+                self.create_rmsf_dir(NOMD=NOMD)
+                self.run_rmsf()
 
     def get_results(self):
         # loops through folders and only gets the results from the outputs
