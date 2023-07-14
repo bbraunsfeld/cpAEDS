@@ -201,7 +201,6 @@ class sampling():
         minstates = np.argmax(endstates_totals, axis=0) # Lists the state with the minimum energy in the given frame
         states, min_counts = np.unique(minstates, return_counts=True) # counts how often a state is has the minimum energy
         # Puts the results in the correct order in the correct array
-        print(lowest_energy, states, min_counts)
         for n, s in enumerate(states):
             lowest_energy[s] = min_counts[n]
 
@@ -210,11 +209,12 @@ class sampling():
         contributions = np.sum(frame_contribution, axis=1) # sum over all contributing frames for each state
 
         # sum up some things for normalization
+        # This is kinda redundant, because they both should add up to the number of frames
         tot_con_frames = sum(contributions)
         tot_en_frames = sum(lowest_energy)
 
         # Fractions of the states with the lowest energy averaged over the whole trajectory
-        fractions = lowest_energy / tot_en_frames
+        fractions = contributions / tot_con_frames
 
         for i in range(len(efiles)):
             print("Endstates    %s\t\t%s\t\t%s\t\t%s\t\t%s\t\t%s" % (i, round(contributions[i],2), round(contributions[i]*100/tot_con_frames,2), 
