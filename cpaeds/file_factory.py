@@ -144,6 +144,8 @@ def build_mk_script_file(settings_loaded,dir_path):
     version = settings_loaded['system']['version']
     if settings_loaded['system']['lib_type'] == f"cuda":
         lib = f'mk_script_cuda_8_slurm.lib'
+    elif settings_loaded['system']['lib_type'] == f"cuda_new":
+        lib = f'mk_script_cuda_8_slurm.lib'
     elif settings_loaded['system']['lib_type'] == f"cuda_local":
         lib=f'mk_script_cuda_8.lib'
     body = f"""@sys            aeds_{name}
@@ -204,6 +206,7 @@ def build_imd_file(settings_loaded,EIR,rs):
     NTWX = settings_loaded['simulation']['parameters']['NTWX']
     NTWE = settings_loaded['simulation']['parameters']['NTWE']
     dt = settings_loaded['simulation']['parameters']['dt']
+    random_seed = 852383 + rs
     EMIN = settings_loaded['simulation']['parameters']['EMIN']
     EMAX = settings_loaded['simulation']['parameters']['EMAX']
 
@@ -214,6 +217,9 @@ def build_imd_file(settings_loaded,EIR,rs):
     imd.changeValueByName('NTWX', NTWX)
     imd.changeValueByName('NTWE', NTWE)
     imd.changeValueByName('dt', dt)
+    imd.changeValueByName('rnd_seed', random_seed)
+    imd.changeValueByName('NTINHT', 0) #correcting NTINHT from equilibrium
+    imd.changeValueByName('NTISHI', 0) #correcting common mistake from tutorial
     imd.changeValueByName('EMIN', EMIN)
     imd.changeValueByName('EMAX', EMAX)
     imd.changeValueByName('EIR', '\t'.join(str(i) for i in EIR)) #loops over elements in EIR (list of offsets at the same level) 
@@ -222,6 +228,9 @@ def build_imd_file(settings_loaded,EIR,rs):
     if settings_loaded['system']['lib_type'] == f"cuda":
         ALPHLJ='0'  
         ALPHCRF='0'
+    elif settings_loaded['system']['lib_type'] == f"cuda_new":
+        ALPHLJ=''  
+        ALPHCRF=''
     elif settings_loaded['system']['lib_type'] == f"cuda_local":
         ALPHLJ=''  
         ALPHCRF=''
