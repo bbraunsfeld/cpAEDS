@@ -2,6 +2,11 @@ import numpy as np
 import glob
 import statsmodels.api as sm
 from natsort import natsorted
+from math import isclose
+from cpaeds.logger import LoggerFactory
+
+# setting logger name and log level
+logger = LoggerFactory.get_logger("aeds_sampling.py", log_level="INFO", file_name = "debug.log")
 
 #from statsmodels.graphics import tsaplots
 #import matplotlib.pyplot as plt
@@ -213,14 +218,18 @@ class sampling():
         tot_con_frames = sum(contributions)
         tot_en_frames = sum(lowest_energy)
 
+        if not isclose(tot_con_frames, tot_en_frames, abs_tol=1):
+            logger.critical("tot_con_frames is not equal tot_en_frames. Did you change something in the logic?")
+            raise ValueError()
+
         # Fractions of the states with the lowest energy averaged over the whole trajectory
         fractions = contributions / tot_con_frames
 
         for i in range(len(efiles)):
-            print("Endstates    %s\t\t%s\t\t%s\t\t%s\t\t%s\t\t%s" % (i, round(contributions[i],2), round(contributions[i]*100/tot_con_frames,2), 
+            logger.info("Endstates    %s\t\t%s\t\t%s\t\t%s\t\t%s\t\t%s" % (i, round(contributions[i],2), round(contributions[i]*100/tot_con_frames,2), 
                                                                 lowest_energy[i], round(fractions[i],2),
                                                                 dG_diff[i]))
-        print("")
+        logger.info("")
 
         # Accumulative average of the contributing frames
         contrib_accum = np.cumsum(frame_contribution.T, axis=0) / np.cumsum(np.ones_like(frame_contribution.T), axis=0)
