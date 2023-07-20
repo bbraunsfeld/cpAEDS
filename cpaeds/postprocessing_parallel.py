@@ -29,6 +29,8 @@ class postprocessing_parallel(object):
         self.rmsd_list = []
         self.energy_map = self.initialise_energy_map()
         self.energy_runs = []
+        self.accum_runs = []
+        self.fraction_timeseries = []
         self.__check_overwrite()
 
     def __check_overwrite(self):
@@ -36,6 +38,8 @@ class postprocessing_parallel(object):
             if self.config['system']['overwrite'] == True:
                 self.overwrite = True
                 logger.info(f"Overwritting cpAEDS files")  
+            else:
+                self.overwrite = False
         else:
             self.overwrite = False
 
@@ -86,7 +90,11 @@ class postprocessing_parallel(object):
             output_body = build_output(self.config,self.fraction_list,self.dF_list,self.rmsd_list)
             write_file2(output_body,'results.out')
             harmonizedEnergyArray = self.harmonizeEnergyArray(self.energy_runs)
+            harmonizedAccumArray = self.harmonizeEnergyArray(self.accum_runs)
+            harmonizedPrevTserArray = self.harmonizeEnergyArray(self.fraction_timeseries)
             np.save('energies.npy', harmonizedEnergyArray, allow_pickle=False)
+            np.save('end_accum.npy', harmonizedAccumArray, allow_pickle=False)
+            np.save('end_timeseries.npy', harmonizedPrevTserArray, allow_pickle=False)
 
     def harmonizeEnergyArray(self, l: list):
         """
@@ -298,9 +306,11 @@ class postprocessing_parallel(object):
                         self.dF_list.append(df)
                         self.offsets_sp(n)
                         samples = sampling(self.config, self.offsets, df)
-                        fractions, energies = samples.main()
+                        fractions, energies, accum, fraction_timeseries = samples.main()
                         self.fraction_list.append(fractions)
                         self.energy_runs.append(energies)
+                        self.accum_runs.append(accum)
+                        self.fraction_timeseries.append(fraction_timeseries)
                     with set_directory(dir+"/rmsd"):
                         self.rmsd_list.append(self.read_rmsd('rmsd.out'))
 

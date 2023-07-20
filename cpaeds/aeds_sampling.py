@@ -1,6 +1,12 @@
 import numpy as np
 import glob
 import statsmodels.api as sm
+from natsort import natsorted
+from math import isclose
+from cpaeds.logger import LoggerFactory
+
+# setting logger name and log level
+logger = LoggerFactory.get_logger("aeds_sampling.py", log_level="INFO", file_name = "debug.log")
 
 #from statsmodels.graphics import tsaplots
 #import matplotlib.pyplot as plt
@@ -156,14 +162,14 @@ def write_prob_sampling(prob_outfile, prob_state, itime, step):
 
 class sampling():
     def __init__(self, config, offsets, dfs):
-        self.boltzman = 0.00831441
+        self.boltzmann = 0.00831441
         self.OFFSETS = offsets
         self.FREE = dfs
         self.config = config
         self.temp = self.config['simulation']['parameters']['temp']
         self.REFERENCE = "eds_vr.dat"
         self.VMIX = "eds_vmix.dat"
-        self.BETA = 1.0/(self.temp * self.boltzman)
+        self.BETA = 1.0/(self.temp * self.boltzmann)
 
     @staticmethod
     def read_energy_file(file_name):
@@ -179,54 +185,55 @@ class sampling():
 
     def main(self):
         #read files
-        endstates_files = glob.glob("e*[0-9].dat")
-        endstates_files = sorted(endstates_files, key=lambda x: int(x.split(".")[0][1:]), reverse=False)
-        endstates_e = [self.read_energy_file(x) for x in endstates_files]
-        endstates_totals = np.array([], dtype=np.float64)
-        enes = np.array([], dtype=np.float64)
+        efiles = natsorted(glob.glob("e*[0-9].dat"))
+        endstates_e = [self.read_energy_file(x) for x in efiles]
+        endstates_totals = np.empty_like(endstates_e)
         reference = self.read_energy_file(self.REFERENCE)
         vmix = self.read_energy_file(self.VMIX)
+
         if len(endstates_e) != len(self.OFFSETS):
             raise ValueError("endstates_e and self.OFFSETS must have the same length")
         #compute the energies for each endstate
-        for i,hi in enumerate(endstates_e):
-            #compute exponential term
+        for i, hi in enumerate(endstates_e):
             de = (hi - self.OFFSETS[i]) * self.BETA * -1.0
-            #compute exp energy summation
-            expde = np.exp(de)
-            endstates_totals = np.append(endstates_totals, expde)
-            enes = np.append(enes, hi)
-        #normalize results
-        #format array
-        n_states = len(endstates_files)
-        n_frames = int(len(endstates_totals)/n_states)
-        endstates_totals = endstates_totals.reshape(n_states, n_frames)
-        enes = enes.reshape(n_states, n_frames)
-        contributions = {x:0.0 for x in range(len(endstates_files))}
-        lowest_energy = {x:0.0 for x in range(len(endstates_files))}
-        dG_diff = {x:len(np.where((enes[x] - reference) < (self.FREE[x] + (self.temp * self.boltzman)))[0]) for x in range(len(endstates_files))}
-        # compute contributions per frame
-        for i in range(n_frames):
-            final_e = np.sum(endstates_totals[:,i])
-            lowest_energy[np.where(endstates_totals[:,i] == np.max(endstates_totals[:,i]))[0][0]] += 1.0
-            for j in range(n_states):
-                contributions[j] += endstates_totals[j,i]/final_e
-        #print results
-        tot_con = 0.0
-        tot_con_2 = 0.0
-        tot_con_3 = 0.0
-        tot_dG = 0.0
-        for key in contributions:
-            tot_con += contributions[key]
-            tot_con_2 += lowest_energy[key]
-            tot_dG += dG_diff[key]
-        #print("ENDSTATE  NUMBER\tCONT_FRAMES\tPERCENTATGE\tCountMIN\tPERCEN_MIN\tDG")
-        fractions = []
-        for i in range(n_states):
-            """print("Endstates    %s\t\t%s\t\t%s\t\t%s\t\t%s\t\t%s" % (i, round(contributions[i],2), round(contributions[i]*100/tot_con,2), 
-                                                            lowest_energy[i], round(lowest_energy[i]*100/tot_con_2,2),
-                                                            dG_diff[i]))"""
-            fractions.append(contributions[i]/tot_con_2)
-        energies = [vmix,reference] +  endstates_e    
-        return fractions, energies
+            endstates_totals[i] = np.exp(de)
 
+        contributions = np.zeros(len(endstates_e))
+        lowest_energy = np.zeros(len(endstates_e))
+        # Calculates the number of frames where the endstate minus the reference energy is lower than the free energy plus kT (These are the frames that are contributing to the free energy)
+        dG_diff = [np.sum(endstates_e[i] - reference < self.FREE[i] + (self.temp*self.boltzmann)) for i in range(len(endstates_e))]
+
+        minstates = np.argmax(endstates_totals, axis=0) # Lists the state with the minimum energy in the given frame
+        states, min_counts = np.unique(minstates, return_counts=True) # counts how often a state is has the minimum energy
+        # Puts the results in the correct order in the correct array
+        for n, s in enumerate(states):
+            lowest_energy[s] = min_counts[n]
+
+        final_e = sum(endstates_totals) # The final_e is the sum of the totals of all endstates, used for normalization
+        frame_contribution = endstates_totals / final_e # states contributing to each frame
+        contributions = np.sum(frame_contribution, axis=1) # sum over all contributing frames for each state
+
+        # sum up some things for normalization
+        # This is kinda redundant, because they both should add up to the number of frames
+        tot_con_frames = sum(contributions)
+        tot_en_frames = sum(lowest_energy)
+
+        if not isclose(tot_con_frames, tot_en_frames, abs_tol=1):
+            logger.critical("tot_con_frames is not equal tot_en_frames. Did you change something in the logic?")
+            raise ValueError()
+
+        # Fractions of the states with the lowest energy averaged over the whole trajectory
+        fractions = contributions / tot_con_frames
+
+        for i in range(len(efiles)):
+            logger.info("Endstates    %s\t\t%s\t\t%s\t\t%s\t\t%s\t\t%s" % (i, round(contributions[i],2), round(contributions[i]*100/tot_con_frames,2), 
+                                                                lowest_energy[i], round(fractions[i],2),
+                                                                dG_diff[i]))
+        logger.info("")
+
+        # Accumulative average of the contributing frames
+        contrib_accum = np.cumsum(frame_contribution.T, axis=0) / np.cumsum(np.ones_like(frame_contribution.T), axis=0)
+
+        energies = [vmix, reference] + endstates_e
+
+        return fractions, energies, contrib_accum, frame_contribution.T
