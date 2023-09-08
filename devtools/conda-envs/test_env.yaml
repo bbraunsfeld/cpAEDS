@@ -17,6 +17,8 @@ dependencies:
   - pytest
   - pytest-cov
   - codecov
+  - natsort
+  - math
 
     # Pip-only installs
   #- pip:
