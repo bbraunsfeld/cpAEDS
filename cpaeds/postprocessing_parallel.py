@@ -98,7 +98,7 @@ class postprocessing_parallel(object):
 
     def harmonizeEnergyArray(self, l: list):
         """
-        Harmonizes the length of a given list of lists containing energies by padding the 3rd dimension of the list with np.nan.
+        Harmonizes the length of a given list of lists by padding all dimensions with np.nan to the maximum length.
 
         This is needed to use np.save on unfinished runs if there are some runs which are more finished than others.
 
@@ -111,10 +111,16 @@ class postprocessing_parallel(object):
         for run in l:
             array_list.append(np.array(run))
 
-        maxLen = max([len(a[-1]) for a in array_list])
+        # Calculate the maximum dimensions across all arrays
+        shapes = np.array([a.shape for a in array_list])
+        maxShape = shapes.max(axis=0)
 
+        # Pad each array in the list to the maximum dimensions
         for i, run in enumerate(array_list):
-            paddedArray = np.pad(run, [(0,0), (0, maxLen - len(run[0]))], 'constant', constant_values=np.nan)
+            originalShape = run.shape
+            padding = maxShape - originalShape
+            pad_width = [(0, padding[i]) for i in range(len(padding))]
+            paddedArray = np.pad(run, pad_width=pad_width, mode='constant', constant_values=np.nan)
             array_list[i] = paddedArray
 
         return np.array(array_list)
