@@ -67,11 +67,12 @@ def check_finished(settings_loaded):
     for file in os.listdir(os.getcwd()):
         if file.endswith('.omd'):
             omd_list.append(file)
-
-    if len(omd_list) == settings_loaded['simulation']['parameters']['NRUN']:
+    NOMD = len(omd_list)
+    #This gives us the option to discard parts of the trajectory for finished runs
+    if NOMD >= settings_loaded['simulation']['parameters']['NRUN']:
         run_complete = True
-
-    return run_complete, len(omd_list)
+        NOMD = settings_loaded['simulation']['parameters']['NRUN']
+    return run_complete, NOMD
 
 def copy_lib_file(destination,lib_name,version,overwrite):
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), f"data/{version}.lib"))

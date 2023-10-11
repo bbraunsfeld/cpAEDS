@@ -34,17 +34,24 @@ def offset_steps(EIR_start,EIR_range,EIR_step_size,EIR_groups,cpAEDS_type):
                         offset_list = [*range(int(EIR-EIR_range/2),int(EIR+EIR_range/2+EIR_step_size),EIR_step_size)]
                         offset_list.sort()
                         offsets[state].append(offset_list)
-                    elif cpAEDS_type == 2:
+                    elif cpAEDS_type == 2 or cpAEDS_type == 3:
                         offset_close_eq = [*range(int(EIR-8),int(EIR+8+EIR_step_size),EIR_step_size)]
                         offset_upper_limit = [*range(int(EIR-(EIR_range-8)/2-4*EIR_step_size),int(EIR-8),EIR_step_size*4)]
                         offset_lower_limit = [*range(int(EIR+8+4*EIR_step_size),int(EIR+EIR_range/2+EIR_step_size),EIR_step_size*4)]
                         offset_list = offset_close_eq + offset_upper_limit + offset_lower_limit
                         offset_list.sort()
                         offsets[state] = offset_list
+
         n_offsets = len(offsets[EIR_groups[-1][-1]])
         for i,lst in enumerate(offsets):
             if len(lst) == 0:
                 offsets[i] = [EIR_start[i]] * n_offsets
+    if cpAEDS_type == 3:
+        offset_arr = np.array(offsets)    
+        offset_cumsum = np.cumsum(offset_arr, axis = 0)
+        for state in offsets:
+            for i,eir in enumerate(state):
+                state[i] = float(round(state[i] - offset_cumsum[-1][i]/len(EIR_start),2))
     return offsets
 
 def pKa_from_df(df,temp):
@@ -68,8 +75,12 @@ def ph_curve(pka,fraction):
     """
     ph_list = []
     for i in fraction:
-        if i == 1 or i == 0:
-            ph_list.append(np.NaN)
+        if i == 1: 
+            ph = pka - np.log10(0.99999999/(1-0.99999999))
+            ph_list.append(ph)
+        elif i == 0:
+            ph = pka - np.log10(0.00000001/(1-0.00000001))
+            ph_list.append(ph)
         else:
             ph = pka - np.log10(i/(1-i))
             ph_list.append(ph)
@@ -116,7 +127,7 @@ def log_fit(x, y):
     x = x[~nans]
     y = y[~nans]
 
-    initial_guess = [np.max(y), np.min(y), 1, np.median(x)]
-    popt, pcov = curve_fit(logistic_curve, x, y, p0=initial_guess, method='dogbox') 
-
+    initial_guess = [np.max(y), np.min(y), -1, np.median(x)]
+    popt, pcov = curve_fit(logistic_curve, x, y, p0=initial_guess, method='dogbox',maxfev=10000) 
+    
     return popt
