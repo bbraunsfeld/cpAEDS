@@ -63,7 +63,7 @@ class StdPlot(Plot):
         fractions = df.loc[:, df.columns.str.startswith('FRACTION')]
         return fractions.iloc[:, states]
     
-    def offset_fraction(self, ax=None, refstate: int = -1, plotArgs:dict = {}, colors:list = None):
+    def offset_fraction(self, ax=None, refstate: int = -1, diff=True, plotArgs:dict = {}, colors:list = None):
         """
         Generates a plot with the offset on the x-axis and the fraction of the states on the y-axis.
         If there is only two states, it will only plot the fraction of the first state (assuming that fraction(1) + fraction(2) = 1)
@@ -74,7 +74,10 @@ class StdPlot(Plot):
             plotArgs (dictionary, optional): Additional arguments to pass along to plt.plot (e.g. marker, color,...)
             colors (list, optional): A list of colors to be used for the states. If there is only two fractions, the length should be 1, otherwise it should be the same length as the number of fractions.
         """
-        x = self.getOffset(refstate)
+        if diff == True:
+            x = self.getOffset(-1) - self.getOffset(refstate)
+        else:
+            x = self.getOffset(refstate)
         ys = self.getFractions()
         
         standalone = False
@@ -103,7 +106,8 @@ class StdPlot(Plot):
             plt.savefig("offset_fraction.png")
         gc.collect()
 
-    def offset_pH(self, state: int = -1, offset_state: int = -1, ax = None, linfit_subset: list = [0,-1], ref_is_protonated: bool = False, plotArgs: dict = {}, colors: list = None, plotArgsTrend: dict = {}):
+    def offset_pH(self, state: int = -1, offset_state: int = -1, ax = None, linfit_subset: list = [0,-1], 
+                  ref_is_protonated: bool = False, diff: bool = False, plotArgs: dict = {}, colors: list = None, plotArgsTrend: dict = {}):
         """
         Generates a plot with the offset on the x-axis and the computed pH (from the pKa) on the y-axis.
         If no state is given, then the last state is assumed to be reference state. By default, the reference state is the fully deprotonated one.
@@ -117,8 +121,10 @@ class StdPlot(Plot):
         plotArgsTrend (dictionary, optional): Additional arguments to pass along to the plotting of the trend lines (e.g. marker)
         colors (list, optional): list of colors for points, LogFit, linearFit
         """
-
-        x = self.getOffset(offset_state)
+        if diff == True:
+            x = self.getOffset(-1) - self.getOffset(offset_state)
+        else:
+            x = self.getOffset(offset_state)
         fractions = self.getFractions(states=state)
 
         pH = self.ph_curve_deprot(self.pka, (1 - fractions) if ref_is_protonated else fractions )
@@ -126,6 +132,11 @@ class StdPlot(Plot):
         # Fitting to the data
         x_subset = x[linfit_subset[0]:linfit_subset[1]]
         pH_subset = pH[linfit_subset[0]:linfit_subset[1]]
+        x_subset = np.array(x_subset)
+        pH_subset = np.array(pH_subset)
+        nans = np.isnan(pH_subset)
+        x_subset = x_subset[~nans]
+        pH_subset = pH_subset[~nans]
         self.linfit = linregress(x_subset, pH_subset) 
 
         # Logfit
@@ -141,7 +152,10 @@ class StdPlot(Plot):
         ax.plot(x, self.linfit.intercept + x * self.linfit.slope, **({} if colors is None else {'c': colors[2]}), **plotArgsTrend)
         ax.scatter(x, pH, **({} if colors is None else {'c': colors[0]}), **plotArgs)
         ax.set_ylabel("theoretical pH")
-        ax.set_xlabel("Offset [kJ/mol]")
+        if diff == True:
+            ax.set_xlabel("dOffset [kJ/mol]")
+        else:
+            ax.set_xlabel("Offset [kJ/mol]")
         ax.axhline(self.pka, color="gray", linewidth=0.5)
 
         if standalone:
@@ -167,6 +181,11 @@ class StdPlot(Plot):
         if fit == 'lin':
             x_subset = x[linfit_subset[0]:linfit_subset[1]]
             pH_subset = pH[linfit_subset[0]:linfit_subset[1]]
+            x_subset = np.array(x_subset)
+            pH_subset = np.array(pH_subset)
+            nans = np.isnan(pH_subset)
+            x_subset = x_subset[~nans]
+            pH_subset = pH_subset[~nans]
             self.linfit = linregress(x_subset, pH_subset) 
             offsetToPH = lambda x: self.linfit.intercept + self.linfit.slope * x
             pHToOffset = lambda x: (x - self.linfit.intercept) / self.linfit.slope
