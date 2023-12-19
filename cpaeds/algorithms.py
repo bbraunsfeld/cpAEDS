@@ -19,6 +19,9 @@ def offset_steps(EIR_start,EIR_range,EIR_step_size,EIR_groups,cpAEDS_type):
     Creates a list of offsets for different applications.
         cpAEDS_type = 1 -> search type application used with bigger EIR_step_size and has equal spacing between offset steps.
         cpAEDS_type = 2 -> production type application with smaller EIR_step_size close to EIR_start and bigger steps further away. 
+        cpAEDS_type = 3 -> production type application with smaller EIR_step_size close to EIR_start and bigger steps further away.
+                           Te offsets are averaged around 0.
+        cpAEDS_type = 4 -> The offset of state is increased until the mid point and the the offset of the other state groups is decreased.
     """
     offsets=[[]] * len(EIR_start)
     if EIR_range == 0:
@@ -34,13 +37,13 @@ def offset_steps(EIR_start,EIR_range,EIR_step_size,EIR_groups,cpAEDS_type):
                         offset_list = [*range(int(EIR-EIR_range/2),int(EIR+EIR_range/2+EIR_step_size),EIR_step_size)]
                         offset_list.sort()
                         offsets[state].append(offset_list)
-                    elif cpAEDS_type == 2 or cpAEDS_type == 3:
+                    elif cpAEDS_type == 2 or cpAEDS_type == 3 or  cpAEDS_type == 4:
                         offset_close_eq = [*range(int(EIR-8),int(EIR+8+EIR_step_size),EIR_step_size)]
                         offset_upper_limit = [*range(int(EIR-(EIR_range-8)/2-4*EIR_step_size),int(EIR-8),EIR_step_size*4)]
                         offset_lower_limit = [*range(int(EIR+8+4*EIR_step_size),int(EIR+EIR_range/2+EIR_step_size),EIR_step_size*4)]
                         offset_list = offset_close_eq + offset_upper_limit + offset_lower_limit
                         offset_list.sort()
-                        offsets[state] = offset_list
+                        offsets[state] = offset_list                    
 
         n_offsets = len(offsets[EIR_groups[-1][-1]])
         for i,lst in enumerate(offsets):
@@ -52,6 +55,15 @@ def offset_steps(EIR_start,EIR_range,EIR_step_size,EIR_groups,cpAEDS_type):
         for state in offsets:
             for i,eir in enumerate(state):
                 state[i] = float(round(state[i] - offset_cumsum[-1][i]/len(EIR_start),2))
+    if cpAEDS_type == 4:
+        offset_arr = np.array(offsets)
+        num_rows, num_cols = offset_arr.shape
+        diff_arr = np.zeros([1,num_cols])
+        for i,eir in enumerate(offset_arr[EIR_groups[-1][-1], :]):
+            if eir < EIR_start[EIR_groups[-1][-1]]:
+                diff_arr[0][i] = EIR_start[EIR_groups[-1][-1]] - eir
+        updated_arr = offset_arr + diff_arr
+        offsets = updated_arr.tolist()
     return offsets
 
 def pKa_from_df(df,temp):
@@ -75,12 +87,8 @@ def ph_curve(pka,fraction):
     """
     ph_list = []
     for i in fraction:
-        if i == 1: 
-            ph = pka - np.log10(0.99999999/(1-0.99999999))
-            ph_list.append(ph)
-        elif i == 0:
-            ph = pka - np.log10(0.00000001/(1-0.00000001))
-            ph_list.append(ph)
+        if i == 1 or i == 0:
+            ph_list.append(np.NaN)
         else:
             ph = pka - np.log10(i/(1-i))
             ph_list.append(ph)
@@ -127,7 +135,7 @@ def log_fit(x, y):
     x = x[~nans]
     y = y[~nans]
 
-    initial_guess = [np.max(y), np.min(y), -1, np.median(x)]
+    initial_guess = [np.max(y), np.min(y), 1, np.median(x)]
     popt, pcov = curve_fit(logistic_curve, x, y, p0=initial_guess, method='dogbox',maxfev=10000) 
     
     return popt
