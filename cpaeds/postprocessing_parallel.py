@@ -25,6 +25,7 @@ class postprocessing_parallel(object):
         self.config = settings
         self.equilibrate = self.config['simulation']['equilibrate']
         self.fraction_list = []
+        self.fcutoff_list = []  # fraction list after applying a cutoff
         self.dF_list = []
         self.rmsd_list = []
         self.energy_map = self.initialise_energy_map()
@@ -87,7 +88,7 @@ class postprocessing_parallel(object):
             pass
         parent = os.getcwd()
         with set_directory(f"{parent}/results"):
-            output_body = build_output(self.config,self.fraction_list,self.dF_list,self.rmsd_list)
+            output_body = build_output(self.config,self.fraction_list,self.fcutoff_list,self.dF_list,self.rmsd_list)
             write_file2(output_body,'results.out')
             harmonizedEnergyArray = self.harmonizeEnergyArray(self.energy_runs)
             harmonizedAccumArray = self.harmonizeEnergyArray(self.accum_runs)
@@ -219,6 +220,7 @@ class postprocessing_parallel(object):
         Needs update.
         """
         self.fraction_list = []
+        self.fcutoff_list = [] # fraction list after applying a cutoff
         offset_list = []
         with open(file, "r") as inn:
             next(inn)
@@ -312,8 +314,9 @@ class postprocessing_parallel(object):
                         self.dF_list.append(df)
                         self.offsets_sp(n)
                         samples = sampling(self.config, self.offsets, df)
-                        fractions, energies, accum, fraction_timeseries = samples.main()
+                        fractions, fcutoff, energies, accum, fraction_timeseries = samples.main()
                         self.fraction_list.append(fractions)
+                        self.fcutoff_list.append(fcutoff)
                         self.energy_runs.append(energies)
                         self.accum_runs.append(accum)
                         self.fraction_timeseries.append(fraction_timeseries)
