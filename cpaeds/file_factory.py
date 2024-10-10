@@ -253,7 +253,11 @@ def build_ene_ana(settings_loaded,NRUN):
     if equilibrate[0] == True:
         start = NRUN*(equilibrate[1]/100)
         start = round(start)
-        logger.info(f"First {equilibrate[1]}% of energy trajectory are dropped. Starting with aeds_{name}_{start}.tre.gz.")
+        if start < 1:
+            start = 1
+            logger.info(f"Trajectory not long enough to drop a part. Starting with aeds_{name}_{start}.tre.gz.")
+        else:
+            logger.info(f"First {equilibrate[1]}% of energy trajectory are dropped. Starting with aeds_{name}_{start}.tre.gz.")
     else:
         start = 1
     NRUN = NRUN + 1
@@ -276,7 +280,11 @@ def build_rmsd(settings_loaded, NRUN):
     if equilibrate[0] == True: 
         start = NRUN*(equilibrate[1]/100)
         start = round(start)
-        logger.info(f"First {equilibrate[1]}% of coordinate trajectory are dropped. Starting with aeds_{name}_{start}.trc.gz.")
+        if start < 1:
+            start = 1
+            logger.info(f"Trajectory not long enough to drop a part. Starting with aeds_{name}_{start}.trc.gz.")
+        else:
+            logger.info(f"First {equilibrate[1]}% of coordinate trajectory are dropped. Starting with aeds_{name}_{start}.trc.gz.")
     else:
         start = 1
     body = f"""@topo {topo}
