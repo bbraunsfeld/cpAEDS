@@ -303,10 +303,10 @@ class postprocessing_parallel(object):
                         pdir_list.sort(key=natural_keys)
         else:
                 pdir_list.append(f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}")
-
+                
         for pdir in tqdm(pdir_list):
             with set_directory(pdir):
-                dir_list = glob(f"{pdir}/{self.config['system']['output_dir_name']}_*/")
+                dir_list = [f"{pdir}/{self.config['system']['output_dir_name']}_{i+1}/" for i in range(self.config['simulation']['parameters']['n_runs'])]
                 for n, dir in tqdm(enumerate(dir_list), desc="subdir", total=len(dir_list)):
                     with set_directory(dir+"/ene_ana"):
                         #logger.info(f"processing {dir}")
