@@ -20,7 +20,7 @@ def offset_steps(EIR_start,EIR_range,EIR_step_size,EIR_groups,cpAEDS_type):
         cpAEDS_type = 1 -> search type application used with bigger EIR_step_size and has equal spacing between offset steps.
         cpAEDS_type = 2 -> production type application with smaller EIR_step_size close to EIR_start and bigger steps further away. 
         cpAEDS_type = 3 -> production type application with smaller EIR_step_size close to EIR_start and bigger steps further away.
-                           Te offsets are averaged around 0.
+                           The offsets are averaged around 0.
         cpAEDS_type = 4 -> The offset of state is increased until the mid point and the the offset of the other state groups is decreased.
     """
     offsets=[[]] * len(EIR_start)
