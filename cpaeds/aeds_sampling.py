@@ -205,6 +205,33 @@ class sampling():
         dG_diff = [np.sum(endstates_e[i] - reference < self.FREE[i] + (self.temp*self.boltzmann)) for i in range(len(endstates_e))]
         minstates = np.argmax(endstates_totals, axis=0) # Lists the state with the minimum energy in the given frame
         # Counting based on the exp averaged energies but still having one state per frame, applying a cutoff
+        # Initialize lists to accumulate the rows for groupA and groupB
+        groupA_list = []
+        groupB_list = []
+
+        logger.debug(f"Shape of groupA array initially: {len(groupA_list)}")
+        enes = np.array(endstates_e)
+        logger.debug(f"Shape of enes array: {enes.shape}")
+
+        count_lowest_state = []
+
+        for i, lowest in enumerate(minstates):
+            cutoff = -400
+            if enes[lowest, i] < cutoff:
+                groupA_list.append(enes[:, i])  # Append the column to groupA_list
+                count_lowest_state.append(i)
+                logger.debug(f"Frames that have groupA state as lowest state after cutoff: {count_lowest_state}.")
+            else:
+                groupB_list.append(enes[:, i])  # Append the column to groupB_list
+
+        # Convert the lists to NumPy arrays at the end
+        groupA = np.array(groupA_list)
+        groupB = np.array(groupB_list)
+
+        # Optionally, log the shapes of the final arrays
+        logger.debug(f"Shape of groupA array after processing: {groupA.shape}")
+        logger.debug(f"Shape of groupB array after processing: {groupB.shape}")
+        """
         groupA = np.empty((0,len(endstates_e)), dtype=np.float64)
         groupB = np.empty((0,len(endstates_e)), dtype=np.float64)
         logger.debug(f"Shape of groupA array {groupA.shape}")
@@ -219,6 +246,7 @@ class sampling():
                 logger.debug(f"Frames that have groupA state as lowest state after cutoff {count_lowest_state}.")
             else:
                 groupB = np.vstack((groupB,enes[:,i]))
+        """        
         contributions_cutoff = np.array([groupA.shape[0],groupB.shape[0]])
         # energies of all states below and above the cutoff.
         groupA = groupA.T

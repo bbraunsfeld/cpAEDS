@@ -151,6 +151,8 @@ def build_mk_script_file(settings_loaded,dir_path):
         lib = f'mk_script_cuda_8_slurm.lib'
     elif settings_loaded['system']['lib_type'] == f"cuda_local":
         lib=f'mk_script_cuda_8.lib'
+    elif settings_loaded['system']['lib_type'] == f"cuda_bmb":
+        lib = f'mk_script_cuda_8_slurm_bmb.lib'
     body = f"""@sys            aeds_{name}
 @bin            {md_engine}
 @dir            {dir_path}
@@ -237,6 +239,10 @@ def build_imd_file(settings_loaded,EIR,rs):
     elif settings_loaded['system']['lib_type'] == f"cuda_local":
         ALPHLJ=''  
         ALPHCRF=''
+    elif settings_loaded['system']['lib_type'] == f"cuda_bmb":
+        ALPHLJ=''  
+        ALPHCRF=''
+    
 
     imd.changeValueByName('ALPHLJ', ALPHLJ)
     imd.changeValueByName('ALPHCRF', ALPHCRF)
