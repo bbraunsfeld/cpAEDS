@@ -60,6 +60,8 @@ class postprocessing_parallel(object):
                 copy_lib_file(f"{parent}/ene_ana",'ene_ana.md++.lib','2018_12_10',self.overwrite)
             elif self.config['system']['lib_type'] == f"cuda_new":
                 copy_lib_file(f"{parent}/ene_ana",'ene_ana.md++.lib','2023_04_15',self.overwrite)
+            elif self.config['system']['lib_type'] == f"cuda_bmb":
+                copy_lib_file(f"{parent}/ene_ana",'ene_ana.md++.lib','2023_04_15',self.overwrite)
             ene_ana_body =  build_ene_ana(self.config,NOMD)
             write_file2(ene_ana_body,'ene_ana.arg')
             df_file_body = build_dfmult_file(self.config)
