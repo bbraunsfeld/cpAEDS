@@ -187,6 +187,7 @@ class sampling():
         #read files
         efiles = natsorted(glob.glob("e*[0-9].dat"))
         endstates_e = [self.read_energy_file(x) for x in efiles]
+        logger.debug(f"endstate_e shape: {len(endstates_e)}/{len(endstates_e[0])}")
         endstates_totals = np.empty_like(endstates_e)
         reference = self.read_energy_file(self.REFERENCE)
         vmix = self.read_energy_file(self.VMIX)
@@ -202,8 +203,55 @@ class sampling():
         lowest_energy = np.zeros(len(endstates_e))
         # Calculates the number of frames where the endstate minus the reference energy is lower than the free energy plus kT (These are the frames that are contributing to the free energy)
         dG_diff = [np.sum(endstates_e[i] - reference < self.FREE[i] + (self.temp*self.boltzmann)) for i in range(len(endstates_e))]
-
         minstates = np.argmax(endstates_totals, axis=0) # Lists the state with the minimum energy in the given frame
+        # Counting based on the exp averaged energies but still having one state per frame, applying a cutoff
+        # Initialize lists to accumulate the rows for groupA and groupB
+        groupA_list = []
+        groupB_list = []
+
+        logger.debug(f"Shape of groupA array initially: {len(groupA_list)}")
+        enes = np.array(endstates_e)
+        logger.debug(f"Shape of enes array: {enes.shape}")
+
+        count_lowest_state = []
+
+        for i, lowest in enumerate(minstates):
+            cutoff = -400
+            if enes[lowest, i] < cutoff:
+                groupA_list.append(enes[:, i])  # Append the column to groupA_list
+                count_lowest_state.append(i)
+                logger.debug(f"Frames that have groupA state as lowest state after cutoff: {count_lowest_state}.")
+            else:
+                groupB_list.append(enes[:, i])  # Append the column to groupB_list
+
+        # Convert the lists to NumPy arrays at the end
+        groupA = np.array(groupA_list)
+        groupB = np.array(groupB_list)
+
+        # Optionally, log the shapes of the final arrays
+        logger.debug(f"Shape of groupA array after processing: {groupA.shape}")
+        logger.debug(f"Shape of groupB array after processing: {groupB.shape}")
+        """
+        groupA = np.empty((0,len(endstates_e)), dtype=np.float64)
+        groupB = np.empty((0,len(endstates_e)), dtype=np.float64)
+        logger.debug(f"Shape of groupA array {groupA.shape}")
+        enes = np.array(endstates_e)
+        logger.debug(f"Shape of enes array {enes.shape}")
+        count_lowest_state = []
+        for i, lowest in enumerate(minstates):
+            cutoff = -400
+            if enes[lowest,i] < cutoff:
+                groupA = np.vstack((groupA,enes[:,i]))
+                count_lowest_state.append(i)
+                logger.debug(f"Frames that have groupA state as lowest state after cutoff {count_lowest_state}.")
+            else:
+                groupB = np.vstack((groupB,enes[:,i]))
+        """        
+        contributions_cutoff = np.array([groupA.shape[0],groupB.shape[0]])
+        # energies of all states below and above the cutoff.
+        groupA = groupA.T
+        groupB = groupB.T
+
         states, min_counts = np.unique(minstates, return_counts=True) # counts how often a state is has the minimum energy
         # Puts the results in the correct order in the correct array
         for n, s in enumerate(states):
@@ -217,17 +265,22 @@ class sampling():
         # This is kinda redundant, because they both should add up to the number of frames
         tot_con_frames = sum(contributions)
         tot_en_frames = sum(lowest_energy)
+        tot_concut_frames = sum(contributions_cutoff)
 
         if not isclose(tot_con_frames, tot_en_frames, abs_tol=1):
             logger.critical("tot_con_frames is not equal tot_en_frames. Did you change something in the logic?")
             raise ValueError()
-
+        if not isclose(tot_con_frames, tot_concut_frames, abs_tol=1):
+            logger.critical("tot_con_frames is not equal tot_concut_frames. Did you change something in the logic?")
+            raise ValueError()
+        
         # Fractions of the states with the lowest energy averaged over the whole trajectory
-        fractions = contributions / tot_con_frames
-
+        fractions_contrib = contributions / tot_con_frames
+        fractions_ene = lowest_energy / tot_en_frames
+        fractions_cutoff = contributions_cutoff / tot_concut_frames
         for i in range(len(efiles)):
-            logger.info("Endstates    %s\t\t%s\t\t%s\t\t%s\t\t%s\t\t%s" % (i, round(contributions[i],2), round(contributions[i]*100/tot_con_frames,2), 
-                                                                lowest_energy[i], round(fractions[i],2),
+            logger.info("Endstates    %s\t\t%s\t\t%s\t\t%s\t\t%s\t\t%s" % (i, round(contributions[i],2), round(fractions_contrib[i],2), 
+                                                                lowest_energy[i], round(fractions_ene[i],2),
                                                                 dG_diff[i]))
         logger.info("")
 
@@ -236,4 +289,4 @@ class sampling():
 
         energies = [vmix, reference] + endstates_e
 
-        return fractions, energies, contrib_accum, frame_contribution.T
+        return fractions_contrib, fractions_cutoff, energies, contrib_accum, frame_contribution.T

@@ -1,6 +1,9 @@
 import datetime
 import os
 import re
+from cpaeds.logger import LoggerFactory
+
+logger = LoggerFactory.get_logger("file_factory.py", log_level="INFO", file_name = "debug.log")
 
 class Block:
     '''
@@ -148,6 +151,8 @@ def build_mk_script_file(settings_loaded,dir_path):
         lib = f'mk_script_cuda_8_slurm.lib'
     elif settings_loaded['system']['lib_type'] == f"cuda_local":
         lib=f'mk_script_cuda_8.lib'
+    elif settings_loaded['system']['lib_type'] == f"cuda_bmb":
+        lib = f'mk_script_cuda_8_slurm_bmb.lib'
     body = f"""@sys            aeds_{name}
 @bin            {md_engine}
 @dir            {dir_path}
@@ -234,6 +239,10 @@ def build_imd_file(settings_loaded,EIR,rs):
     elif settings_loaded['system']['lib_type'] == f"cuda_local":
         ALPHLJ=''  
         ALPHCRF=''
+    elif settings_loaded['system']['lib_type'] == f"cuda_bmb":
+        ALPHLJ=''  
+        ALPHCRF=''
+    
 
     imd.changeValueByName('ALPHLJ', ALPHLJ)
     imd.changeValueByName('ALPHCRF', ALPHCRF)
@@ -250,12 +259,17 @@ def build_ene_ana(settings_loaded,NRUN):
     if equilibrate[0] == True:
         start = NRUN*(equilibrate[1]/100)
         start = round(start)
+        if start < 1:
+            start = 1
+            logger.info(f"Trajectory not long enough to drop a part. Starting with aeds_{name}_{start}.tre.gz.")
+        else:
+            logger.info(f"First {equilibrate[1]}% of energy trajectory are dropped. Starting with aeds_{name}_{start}.tre.gz.")
     else:
         start = 1
     NRUN = NRUN + 1
     header = f"""@prop eds_vr eds_emin eds_emax eds_vmix eds_globmin eds_globminfluc """
     for i in range(nstates):
-        header += f"e{i+1} e{i+1}s "
+        header += f"e{i+1} e{i+1}s e{i+1}r "
     body = header + f"""\n@topo {topo}
 @library ene_ana.md++.lib
 @en_files
@@ -272,6 +286,11 @@ def build_rmsd(settings_loaded, NRUN):
     if equilibrate[0] == True: 
         start = NRUN*(equilibrate[1]/100)
         start = round(start)
+        if start < 1:
+            start = 1
+            logger.info(f"Trajectory not long enough to drop a part. Starting with aeds_{name}_{start}.trc.gz.")
+        else:
+            logger.info(f"First {equilibrate[1]}% of coordinate trajectory are dropped. Starting with aeds_{name}_{start}.trc.gz.")
     else:
         start = 1
     body = f"""@topo {topo}
@@ -296,7 +315,7 @@ def build_dfmult_file(settings_loaded):
 {endstates}"""
     return body
 
-def build_output(settings_loaded,fractions,dF,rmsd):
+def build_output(settings_loaded,fractions,fcutoff,dF,rmsd):
     offsets = settings_loaded['simulation']['parameters']['EIR_list']
     n= len(offsets[0])
     header = f"""#RUN,"""
@@ -309,7 +328,7 @@ def build_output(settings_loaded,fractions,dF,rmsd):
         fraction_header += f"FRACTION{i+1},"
         dF_header += f"dF{i+1},"
 
-    header = header + offset_header + fraction_header + dF_header + f"rmsd\n"
+    header = header + offset_header + fraction_header + f"stateA,stateB," + dF_header + f"rmsd\n"
     body = f""""""
 
     for i in range(1,n+1,1):
@@ -321,6 +340,8 @@ def build_output(settings_loaded,fractions,dF,rmsd):
             for j in offsets:
                 body += f"{j[i-1]},"
             for j in fractions[i-1]:
+                body += f"{j},"
+            for j in fcutoff[i-1]:
                 body += f"{j},"
             for j in dF[i-1]:
                 body += f"{j},"

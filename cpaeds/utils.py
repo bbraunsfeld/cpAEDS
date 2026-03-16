@@ -104,7 +104,8 @@ def write_file2(input_string,name) -> str:
     with open(check_file,'w+') as file:
         file.write(input_string)
     logger.info(f"{name} created in {os.getcwd()}.")
-
+"""
+moved into postprocessing
 def create_ana_dir(settings_loaded):
     try:
         os.mkdir('ene_ana')
@@ -115,7 +116,7 @@ def create_ana_dir(settings_loaded):
         copy_lib_file(f"{parent}/ene_ana",'ene_ana.md++.lib')
         ene_ana_body =  build_ene_ana(settings_loaded,settings_loaded['simulation']['parameters']['NRUN'])
         write_file(ene_ana_body,'ene_ana.arg')
-
+"""
 #### analysis ####
 def read_df(file):
     df = 'NaN'

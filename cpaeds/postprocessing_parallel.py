@@ -25,6 +25,7 @@ class postprocessing_parallel(object):
         self.config = settings
         self.equilibrate = self.config['simulation']['equilibrate']
         self.fraction_list = []
+        self.fcutoff_list = []  # fraction list after applying a cutoff
         self.dF_list = []
         self.rmsd_list = []
         self.energy_map = self.initialise_energy_map()
@@ -59,6 +60,8 @@ class postprocessing_parallel(object):
                 copy_lib_file(f"{parent}/ene_ana",'ene_ana.md++.lib','2018_12_10',self.overwrite)
             elif self.config['system']['lib_type'] == f"cuda_new":
                 copy_lib_file(f"{parent}/ene_ana",'ene_ana.md++.lib','2023_04_15',self.overwrite)
+            elif self.config['system']['lib_type'] == f"cuda_bmb":
+                copy_lib_file(f"{parent}/ene_ana",'ene_ana.md++.lib','2023_04_15',self.overwrite)
             ene_ana_body =  build_ene_ana(self.config,NOMD)
             write_file2(ene_ana_body,'ene_ana.arg')
             df_file_body = build_dfmult_file(self.config)
@@ -87,7 +90,7 @@ class postprocessing_parallel(object):
             pass
         parent = os.getcwd()
         with set_directory(f"{parent}/results"):
-            output_body = build_output(self.config,self.fraction_list,self.dF_list,self.rmsd_list)
+            output_body = build_output(self.config,self.fraction_list,self.fcutoff_list,self.dF_list,self.rmsd_list)
             write_file2(output_body,'results.out')
             harmonizedEnergyArray = self.harmonizeEnergyArray(self.energy_runs)
             harmonizedAccumArray = self.harmonizeEnergyArray(self.accum_runs)
@@ -219,6 +222,7 @@ class postprocessing_parallel(object):
         Needs update.
         """
         self.fraction_list = []
+        self.fcutoff_list = [] # fraction list after applying a cutoff
         offset_list = []
         with open(file, "r") as inn:
             next(inn)
@@ -301,10 +305,10 @@ class postprocessing_parallel(object):
                         pdir_list.sort(key=natural_keys)
         else:
                 pdir_list.append(f"{self.config['system']['aeds_dir']}/{self.config['system']['output_dir_name']}")
-
+                
         for pdir in tqdm(pdir_list):
             with set_directory(pdir):
-                dir_list = glob(f"{pdir}/{self.config['system']['output_dir_name']}_*/")
+                dir_list = [f"{pdir}/{self.config['system']['output_dir_name']}_{i+1}/" for i in range(self.config['simulation']['parameters']['n_runs'])]
                 for n, dir in tqdm(enumerate(dir_list), desc="subdir", total=len(dir_list)):
                     with set_directory(dir+"/ene_ana"):
                         #logger.info(f"processing {dir}")
@@ -312,8 +316,9 @@ class postprocessing_parallel(object):
                         self.dF_list.append(df)
                         self.offsets_sp(n)
                         samples = sampling(self.config, self.offsets, df)
-                        fractions, energies, accum, fraction_timeseries = samples.main()
+                        fractions, fcutoff, energies, accum, fraction_timeseries = samples.main()
                         self.fraction_list.append(fractions)
+                        self.fcutoff_list.append(fcutoff)
                         self.energy_runs.append(energies)
                         self.accum_runs.append(accum)
                         self.fraction_timeseries.append(fraction_timeseries)
