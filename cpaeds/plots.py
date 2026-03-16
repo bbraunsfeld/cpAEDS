@@ -161,8 +161,8 @@ class StdPlot(Plot):
         ax.plot(plotpoints, logistic_curve(plotpoints, *self.logfit), **({} if colors is None else {'c': colors[1]}), **plotArgsTrend)
         ax.plot(x, self.linfit.intercept + x * self.linfit.slope, **({} if colors is None else {'c': colors[2]}), **plotArgsTrend)
         ax.scatter(x, pH, **({} if colors is None else {'c': colors[0]}), **plotArgs)
-        ax.set_ylabel("theoretical pH")
-        if diff == True:
+        ax.set_ylabel("theoretical pH") 
+       if diff == True:
             ax.set_xlabel("dOffset [kJ/mol]")
         else:
             ax.set_xlabel("Offset [kJ/mol]")
