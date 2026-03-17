@@ -88,7 +88,7 @@ def ph_curve(pka,fraction):
     ph_list = []
     for i in fraction:
         if i == 1 or i == 0:
-            ph_list.append(np.NaN)
+            ph_list.append(np.nan)
         else:
             ph = pka - np.log10(i/(1-i))
             ph_list.append(ph)
